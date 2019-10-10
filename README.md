@@ -3,7 +3,7 @@ The RTL-SDR Radio Observatory.
 
 ## Assumptions:
 
-It is assumed that you have RtlSdr device set up with the proper drivers on your machine. Although this code can run on Windows or Linux, it was developed and tested on a Raspberry Pi 4.
+It is assumed that you have RtlSdr device set up with the proper drivers on your machine. Although this code can run on Windows or Linux, it was developed and tested on a Raspberry Pi 4. I try my best to make the core observation functions cross-platform, and avoid assumptions about processor speed and memory. Hawrdware-interfacing functions may require additional customization for your hardware and platform.
 
 Several aspects of this code assume the presence of outside hardware:
 - RtlSdr USB dongle (I use the rtl-sdr.com v3 dongle)
@@ -28,13 +28,11 @@ The code is structured to support the observing workflow:
   - Baseline subtraction of one spectra from another*
 - Utilities:
   - Subroutines shared between functions
-  - Implementations of optional hardware-interface (HWIF) features as described above
+  - Implementations of optional hardware interface features as described above
 
 \* Expected to be implemented before 2020
 
 ## Known dependencies:
-- Linux-based OS
-  - I try my best to make the core observation functions cross-platform, and avoid assumptions about processor speed and memory. HWIF functions may require additional customization for your hardware and platform.
 - Python 3
   - gpiozero (optional, enables addressing noise source switches with GPIO pins)
   - numpy
@@ -46,7 +44,9 @@ The code is structured to support the observing workflow:
 - rtl_biast (optional, enables powering an external low noise amplifier through the RTL-SDR coax)
 
 ## Known issues:
-- This is a work in progress. Not all features are implemented yet. 
+- This is a work in progress. Not all features are implemented yet.
+- Making spectra with Python is much, much slower than the equivalent compiled C/C++ code (see rtl-power or rtl-power-fftw), and taking multiple spectra for averaging is far less time-efficient. This means greater noise for equivalent integration times in standalone utilities (less sensitivity)
+  - As a consequence, any functions hitting pyrtlsdr's get_samples() over and over inside a time-integration loop may underestimate the average power accumulated over that time when compared to a standalone compiled C/C++ utility. Since more overhead is spent calling driver functions from Python, a smaller fraction of the integration time is spent collecting samples. Calibration should mitigate the effect, but the consequences outlined above for noise are more difficult to get around without an intelligently designed buffer system.
 - It requires much more fiddling to set up and take observations now than it eventually will. 
 - Recorded and calibration values may not invalid due to mistakes in math, mistakes of omission, and assumptions involved in the implementation.
 - Robustness and exception handling, as well as SIGINT, etc., handling are not implemented beyond that handled by default in Python. 
