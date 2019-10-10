@@ -55,4 +55,4 @@ The code is structured to support the observing workflow:
 - I write a lot of comments, which you might not want to read.
 - I need to add more pretty pictures.
 
-Contact me here with your issues andquestions and we'll work together to make them right. 
+Contact me here with your issues and questions and we'll work together to make them right. 
