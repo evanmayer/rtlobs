@@ -50,8 +50,7 @@ The code is structured to support the observing workflow:
   - As a consequence, any functions hitting pyrtlsdr's get_samples() over and over inside a time-integration loop may underestimate the average power accumulated over that time when compared to a standalone compiled C/C++ utility. Since more overhead is spent calling driver functions from Python, a smaller fraction of the integration time is spent collecting samples. Calibration should mitigate the effect, but the consequences outlined above for noise are more difficult to get around without an intelligently designed buffer system.
 - It requires much more fiddling to set up and take observations now than it eventually will. 
 - Recorded and calibrated values may be invalid due to mistakes or assumptions made. Don't use this for your science fair project yet.
-- Robustness and exception handling, as well as SIGINT, etc., handling are not implemented beyond that handled by default in Python. 
-- RTL-SDR devices may not surrender permissions and throw a usb_claim_interface_error -6 if a SIGINT is passed at the wrong time. The USB device should be remounted or the interactive session restarted to regain command of the dongle.
+- RTL-SDR devices may not surrender permissions and throw a usb_claim_interface_error -6 if a SIGINT is passed at the wrong time. The USB device should be remounted or the interactive session restarted to regain command of the dongle. A good faith attempt at cleanup has been made with try...finally.
 - I write a lot of comments, which you might not want to read.
 - I need to add more pretty pictures.
 
