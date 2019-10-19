@@ -5,14 +5,14 @@ Library for calibration functions on an rtl-sdr based radio telescope.
 '''
 
 import numpy as np
-from rtlsdr import RtlSdr
 import time
-import utils as ut
+
+from rtlsdr import RtlSdr
 
 
 def run_total_power_int( num_samp, gain, rate, fc, t_int ):
     '''
-    Implement a total-power radiometer.
+    Implement a total-power radiometer. Raw, uncalibrated power values.
 
     Inputs:
     num_samp: Number of elements to sample from the SDR IQ timeseries.
@@ -52,7 +52,7 @@ def run_total_power_int( num_samp, gain, rate, fc, t_int ):
         cnt += 1
         # The below is a total power measurement equivalent to
         # P = V^2 / R = (sqrt(I^2 + Q^2))^2 = (I^2 + Q^2) / 1,
-        # ignoring R since it cancels out when using these in a 
+        # ignoring setting R=1 since it cancels out when using these in a 
         # calibration.
         p_tot += np.sum(np.real(iq*np.conj(iq)))
     
