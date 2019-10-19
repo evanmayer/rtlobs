@@ -42,7 +42,7 @@ def run_total_power_int( num_samp, gain, rate, fc, t_int, async_mode=True ):
 
     fc:         Base center frequency (Hz)
     t_int:      Total integration time (s)
-    async_mode: Use pyrtlsdr's async library to instead of a while loop
+    async_mode: Use pyrtlsdr's async library instead of a while loop
                 to pull samples from the rtlsdr.
 
     Returns:
