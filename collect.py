@@ -54,21 +54,22 @@ def run_total_power_int( num_samp, gain, rate, fc, t_int, async_mode=True ):
     # Start the RtlSdr instance
     print('Initializing rtl-sdr with pyrtlsdr:')
     sdr = RtlSdr()
-    sdr.rs = rate
-    sdr.fc = fc
-    sdr.gain = gain
-    print('  sample rate: {} MHz'.format(sdr.rs/1e6))
-    print('  center frequency {} MHz'.format(sdr.fc/1e6))
-    print('  gain: {} dB'.format(sdr.gain))
-    print('  num samples per call: {}'.format(num_samp))
-    print('  requested integration time: {}s'.format(t_int))
-
-    global p_tot
-    global cnt
-    p_tot = 0.0
-    cnt = 0
 
     try:
+        sdr.rs = rate
+        sdr.fc = fc
+        sdr.gain = gain
+        print('  sample rate: {} MHz'.format(sdr.rs/1e6))
+        print('  center frequency {} MHz'.format(sdr.fc/1e6))
+        print('  gain: {} dB'.format(sdr.gain))
+        print('  num samples per call: {}'.format(num_samp))
+        print('  requested integration time: {}s'.format(t_int))
+
+        global p_tot
+        global cnt
+        p_tot = 0.0
+        cnt = 0
+
         # Set the baseline time
         start_time = time.time()
         print('Integration began at {}'.format(time.strftime('%a, %d %b %Y %H:%M:%S', time.localtime(start_time))))
@@ -132,20 +133,21 @@ def run_spectrum_int( NFFT, gain, rate, fc, t_int ):
     import rtlsdr.helpers as helpers
 
     sdr = RtlSdr()
-    sdr.rs = rate # Rate of Sampling (intrinsically tied to bandwidth with SDR dongles)
-    sdr.fc = fc
-    sdr.gain = gain
-    print('  sample rate: %0.6f MHz' % (sdr.rs/1e6))
-    print('  center frequency %0.6f MHz' % (sdr.fc/1e6))
-    print('  gain: %d dB' % sdr.gain)
-    print('  num samples per call: {}'.format(NFFT))
-    print('  requested integration time: {}s'.format(t_int))
-
-    # Set up arrays to store total power calculated from I-Q samples
-    p_xx_tot = np.zeros(NFFT)
-    cnt = 0
 
     try:
+        sdr.rs = rate # Rate of Sampling (intrinsically tied to bandwidth with SDR dongles)
+        sdr.fc = fc
+        sdr.gain = gain
+        print('  sample rate: %0.6f MHz' % (sdr.rs/1e6))
+        print('  center frequency %0.6f MHz' % (sdr.fc/1e6))
+        print('  gain: %d dB' % sdr.gain)
+        print('  num samples per call: {}'.format(NFFT))
+        print('  requested integration time: {}s'.format(t_int))
+
+        # Set up arrays to store total power calculated from I-Q samples
+        p_xx_tot = np.zeros(NFFT)
+        cnt = 0
+
         # Set the baseline time
         start_time = time.time()
         print('Integration began at {}'.format(time.strftime('%a, %d %b %Y %H:%M:%S', time.localtime(start_time))))
