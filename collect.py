@@ -30,7 +30,7 @@ def meas_brightness_temp(num_samp, gain, rate, fc, t_int, T_sys):
     '''
 
 
-def run_total_power_int( num_samp, gain, rate, fc, t_int, async_mode=True ):
+def run_total_power_int( num_samp, gain, rate, fc, t_int ):
     '''
     Implement a total-power radiometer. Raw, uncalibrated power values.
 
@@ -42,8 +42,6 @@ def run_total_power_int( num_samp, gain, rate, fc, t_int, async_mode=True ):
 
     fc:         Base center frequency (Hz)
     t_int:      Total integration time (s)
-    async_mode: Use pyrtlsdr's async library instead of a while loop
-                to pull samples from the rtlsdr.
 
     Returns:
     p_tot:   Time-averaged power in the signal from the sdr, in 
@@ -64,6 +62,18 @@ def run_total_power_int( num_samp, gain, rate, fc, t_int, async_mode=True ):
         print('  gain: {} dB'.format(sdr.gain))
         print('  num samples per call: {}'.format(num_samp))
         print('  requested integration time: {}s'.format(t_int))
+        # For Nyquist sampling of the passband dv over an integration time
+        # tau, we must collect N = 2 * dv * tau real samples.
+        # https://www.cv.nrao.edu/~sransom/web/A1.html#S3
+        # Because the SDR collects complex samples at a rate rs = dv, we can
+        # Nyquist sample a signal of band-limited noise dv with only rs * tau
+        # complex samples.
+        # The phase content of IQ samples allows the bandlimited signal to be
+        # Nyquist sampled at a data rate of rs = dv complex samples per second 
+        # rather than the 2* dv required of real samples.
+        N = int(sdr.rs * t_int)
+        print('  => num samples to collect: {}'.format(N))
+        print('  => est. num of calls: {}'.format(int(N / num_samp)))
 
         global p_tot
         global cnt
@@ -75,30 +85,25 @@ def run_total_power_int( num_samp, gain, rate, fc, t_int, async_mode=True ):
         print('Integration began at {}'.format(time.strftime('%a, %d %b %Y %H:%M:%S', time.localtime(start_time))))
 
         # Time integration loop
-        if async_mode:
-            @helpers.limit_time(t_int)
-            def p_tot_callback(iq, context):
-                # The below is a total power measurement equivalent to
-                # P = V^2 / R = (sqrt(I^2 + Q^2))^2 = (I^2 + Q^2) / 1,
-                # setting R=1 since it cancels out when using these in a 
-                # calibration.
-                global p_tot 
-                p_tot += np.sum(np.real(iq*np.conj(iq)))
-                global cnt 
-                cnt += 1
-            sdr.read_samples_async(p_tot_callback, num_samples=num_samp)
-        else:
-            iq = np.zeros(num_samp, dtype=complex)
-            while time.time()-start_time < t_int:
-                iq = sdr.read_samples(num_samp)
-                cnt += 1
-                p_tot += np.sum(np.real(iq*np.conj(iq)))
+        @helpers.limit_calls(N / num_samp)
+        def p_tot_callback(iq, context):
+            # The below is a total power measurement equivalent to
+            # P = V^2 / R = (sqrt(I^2 + Q^2))^2 = (I^2 + Q^2) / 1,
+            # setting R=1 since it cancels out when using these in a 
+            # calibration.
+            global p_tot 
+            p_tot += np.sum(np.real(iq*np.conj(iq)))
+            global cnt 
+            cnt += 1
+        sdr.read_samples_async(p_tot_callback, num_samples=num_samp)
         
         end_time = time.time()
         print('Integration ended at {} after {} seconds.'.format(time.strftime('%a, %d %b %Y %H:%M:%S'), end_time-start_time))
-        print('{} samples were measured at {}.'.format(cnt*num_samp, fc))
+        print('{} calls were made to SDR.'.format(cnt))
+        print('{} samples were measured at {} MHz'.format(cnt*num_samp, fc/1e6))
+        print('for an effective integration time of {:.2f}s'.format(num_samp * cnt / rate))
 
-        # Compute the average power value based on the number of measurements
+        # Compute the average power value based on the number of measurements we actually did
         p_avg = p_tot / num_samp / cnt
 
         # nice and tidy

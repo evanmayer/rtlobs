@@ -7,6 +7,7 @@ Library for common functions used by an rtl-sdr based radio telescope.
 import os
 import subprocess
 
+
 def biast(state):
     '''
     Turn the bias tee on the device on or off.
