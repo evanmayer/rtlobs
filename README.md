@@ -20,8 +20,8 @@ The code is structured to support the observing workflow:
   - A function implementing Y-factor calibration using two integrated total power values from measuring hot and cold loads and their respective known temperatures using the total-power radiometer implemented below.
 - Collection:
   - Functions for using the RTL-SDR as total-power radiometer, integrating I-Q samples for use in an estimate of the total power incident over an amount of time
-  - Functions for recording time-averaged spectra*
-  - Functions for recording frequency-switched spectra*
+  - Functions for recording time-averaged spectra
+  - Functions for recording frequency-switched spectra on-the-fly*
 - Post-processing:
   - Applying calibration to recorded spectra*
   - Applying the frequency-switching folding technique to spectra taken at two different frequencies*
