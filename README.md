@@ -23,6 +23,7 @@ The code is structured to support the observing workflow:
   - Functions for recording time-averaged spectra
   - Functions for recording frequency-switched spectra on-the-fly*
 - Post-processing:
+  - Basic spectrum plotting
   - Applying calibration to recorded spectra*
   - Applying the frequency-switching folding technique to spectra taken at two different frequencies*
   - Baseline subtraction of one spectra from another*
@@ -49,7 +50,6 @@ The code is structured to support the observing workflow:
 - Making spectra with Python is much, much slower than the equivalent compiled C/C++ code (see rtl-power or rtl-power-fftw), and taking multiple spectra for averaging is far less time-efficient. This means greater noise for equivalent integration times in standalone utilities (less sensitivity)
   - As a consequence, any functions hitting pyrtlsdr's get_samples() over and over inside a time-integration loop may underestimate the average power accumulated over that time when compared to a standalone compiled C/C++ utility. Since more overhead is spent calling driver functions from Python, a smaller fraction of the integration time is spent collecting samples. Calibration should mitigate the effect, but the consequences outlined above for noise are more difficult to get around without an intelligently designed buffer system.
 - It requires much more fiddling to set up and take observations now than it eventually will. 
-- Recorded and calibrated values may be invalid due to mistakes or assumptions made. Don't use this for your science fair project yet.
 - RTL-SDR devices may not surrender permissions and throw a usb_claim_interface_error -6 if a SIGINT is passed at the wrong time. The USB device should be remounted or the interactive session restarted to regain command of the dongle. A good faith attempt at cleanup has been made with try...finally, and does work most of the time.
 - I write a lot of comments, which you might not want to read.
 - I need to add more pretty pictures.
