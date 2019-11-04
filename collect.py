@@ -207,7 +207,7 @@ def run_spectrum_int( NFFT, gain, rate, fc, t_int ):
         # Shift frequency spectra back to the intended range
         freqs = freqs + fc
 
-        save_spectrum('p_avg.txt', freqs, p_avg)
+        #save_spectrum('p_avg.txt', freqs, p_avg)
 
         # nice and tidy
         sdr.close()
