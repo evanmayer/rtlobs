@@ -17,7 +17,7 @@ The code is structured to support the observing workflow:
   - Doppler relative velocity shift calculation for spectra given galactic coordinates**
 - Utilities:
   - Subroutines shared between functions
-  - Implementations of optional hardware interface features as described above
+  - Implementations of optional hardware interface features as described below
 
 \* Expected to be implemented before 2020
 
