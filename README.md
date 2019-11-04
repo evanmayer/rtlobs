@@ -3,7 +3,7 @@ The RTL-SDR Radio Observatory.
 
 ## Assumptions:
 
-It is assumed that you have an RtlSdr device set up with the proper drivers on your machine. Although this code can run on Windows or Linux, it was developed and tested on a Raspberry Pi 4. I try my best to make the core observation functions cross-platform, and avoid assumptions about processor speed and memory. Hawrdware-interfacing functions may require additional customization for your hardware and platform.
+It is assumed that you have an RtlSdr device set up with the proper drivers on your machine. Although this code can run on Windows or Linux, it was developed and tested on a Raspberry Pi 4. I try my best to make the core observation functions cross-platform, and avoid assumptions about processor speed and memory. Hardware-interfacing functions may require additional customization for your hardware and platform.
 
 Several aspects of this code assume the presence of outside hardware:
 - RtlSdr USB dongle (I use the rtl-sdr.com v3 dongle)
