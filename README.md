@@ -25,22 +25,22 @@ The code is structured to support the observing workflow:
 - Post-processing:
   - Basic spectrum plotting
   - Applying calibration to recorded spectra*
-  - Applying the frequency-switching folding technique to spectra taken at two different frequencies*
+  - Applying the frequency-switching folding technique to spectra taken at two different frequencies
   - Baseline subtraction of one spectra from another*
-  - Doppler relative velocity shift calculation for spectra given galactic coordinates (implementation date undetermined)
+  - Doppler relative velocity shift calculation for spectra given galactic coordinates**
 - Utilities:
   - Subroutines shared between functions
   - Implementations of optional hardware interface features as described above
 
 \* Expected to be implemented before 2020
-
+\*\* Implementation date undetermined
 ## Known dependencies:
 - Python 3
   - gpiozero (optional, enables addressing noise source switches with GPIO pins)
   - numpy
   - os
   - roger-'s pyrtlsdr library
-  - subprocess
+  - subprocess (functions in utils package use subprocess features requiring Python 3.7)
   - time
 - librtlsdr
 - rtl_biast (optional, enables powering an external low noise amplifier through the RTL-SDR coax)
