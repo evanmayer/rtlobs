@@ -28,7 +28,7 @@ The code is structured to support the observing workflow:
 import utils as ut
 import collect as col
 import post_process as post
-# Control the Rtl-Sdr on-board bias tee to power an amp
+# Enable the Rtl-Sdr on-board bias tee to power an amp
 ut.biast(1)
 # 1024-bin power spectrum 
 # 49.6 dB of RtlSdr gain
