@@ -1,20 +1,7 @@
 # rtl-obs:
 The RTL-SDR Radio Observatory.
 
-## Assumptions:
-
-It is assumed that you have an RtlSdr device set up with the proper drivers on your machine. Although this code can run on Windows or Linux, it was developed and tested on a Raspberry Pi 4. I try my best to make the core observation functions cross-platform, and avoid assumptions about processor speed and memory. Hardware-interfacing functions may require additional customization for your hardware and platform.
-
-Several aspects of this code assume the presence of outside hardware:
-- RtlSdr USB dongle (I use the rtl-sdr.com v3 dongle)
-- Some reasonable means of amplification/gain: a dish, yagi, or horn antenna, properly filtered for the band of interest, and with a low noise amplifier as one of the first stages after the antenna.
-- Code is provided to optionally use Python to switch on/off an on-board bias tee (a device for delivering power through DC over the SDR coax input) provided on the rtl-sdr.com v3 dongle. It comes hard-coded with the location my rtl-biast driver is installed to. It's easy to configure with the location of your driver executable.
-- Code is provided to optionally use a Raspberry Pi's addressable GPIO pins to control output voltages to a noise source that is switchable across the device input at 5V logic levels. Such a noise source is provided in the form of a 50Ohm resistor onboard the nooelec SAWbird H1 barebones LNA, but could be just as easily sourced elsewhere.
-
-## Installation:
-For now, you'll have to check out the repo by the usual means, and write your own scripts to use the utilities, or use them interactively in IPython or jupyter or something similar. Soon, an installation utility will be provided.
-
-## Usage:
+## Features:
 The code is structured to support the observing workflow:
 - Calibration:
   - A function implementing Y-factor calibration using two integrated total power values from measuring hot and cold loads and their respective known temperatures using the total-power radiometer implemented below.
@@ -36,6 +23,9 @@ The code is structured to support the observing workflow:
 
 \*\* Implementation date undetermined
 
+## Installation:
+For now, you'll have to check out the repo by the usual means, and write your own scripts to use the utilities, or use them interactively in IPython or jupyter or something similar. Soon, an installation utility will be provided.
+
 ## Known dependencies:
 - Python 3
   - gpiozero (optional, enables addressing noise source switches with GPIO pins)
@@ -46,6 +36,15 @@ The code is structured to support the observing workflow:
   - time
 - librtlsdr
 - rtl_biast (optional, enables powering an external low noise amplifier through the RTL-SDR coax)
+
+## Assumptions:
+It is assumed that you have an RtlSdr device set up with the proper drivers on your machine. Although this code can run on Windows or Linux, it was developed and tested on a Raspberry Pi 4. I try my best to make the core observation functions cross-platform, and avoid assumptions about processor speed and memory. Hardware-interfacing functions may require additional customization for your hardware and platform.
+
+Several aspects of this code assume the presence of outside hardware:
+- RtlSdr USB dongle (I use the rtl-sdr.com v3 dongle)
+- Some reasonable means of amplification/gain: a dish, yagi, or horn antenna, properly filtered for the band of interest, and with a low noise amplifier as one of the first stages after the antenna.
+- Code is provided to optionally use Python to switch on/off an on-board bias tee (a device for delivering power through DC over the SDR coax input) provided on the rtl-sdr.com v3 dongle. It comes hard-coded with the location my rtl-biast driver is installed to. It's easy to configure with the location of your driver executable.
+- Code is provided to optionally use a Raspberry Pi's addressable GPIO pins to control output voltages to a noise source that is switchable across the device input at 5V logic levels. Such a noise source is provided in the form of a 50Ohm resistor onboard the nooelec SAWbird H1 barebones LNA, but could be just as easily sourced elsewhere.
 
 ## Known issues:
 - This is a work in progress. Not all features are implemented yet.
