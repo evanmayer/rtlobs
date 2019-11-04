@@ -23,6 +23,26 @@ The code is structured to support the observing workflow:
 
 \*\* Implementation date undetermined
 
+###
+A quick example:
+'''python
+import matplotlib.pyplot as plt
+import utils as ut
+import collect as col
+import post_process as post
+# Control the Rtl-Sdr on-board bias tee to power an amp
+ut.biast(1)
+# 1024-bin power spectrum 
+# 49.6 dB of RtlSdr gain
+# 2.32 MHz sample rate/bandwidth
+# 1.420 GHz center frequency
+# 100 sec integration time
+freqs, p_xx = collect.run_spectrum_int(1024, 49.6, 2.32e6, 1.420e9, 100)
+# Plot the spectrum
+f = post.plot_spectrum(freqs, p_xx)
+f.show()
+'''
+
 ## Installation:
 For now, you'll have to check out the repo by the usual means, and write your own scripts to use the utilities, or use them interactively in IPython or jupyter or something similar. Soon, an installation utility will be provided.
 
