@@ -52,6 +52,8 @@ def f_throw_fold(freqs_on, freqs_off, p_on, p_off):
     minus sign in the folded spectrum y-vals.
     It is assumed that all input iterables have matching length.
 
+    The center frequency of freqs_on MUST be contained by freqs_off.
+
     This is meant to implement the method described here:
     http://herschel.esac.esa.int/hcss-doc-15.0/load/hifi_um/html/hcb_pfsw.html 
 
