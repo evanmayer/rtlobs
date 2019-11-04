@@ -42,7 +42,7 @@ The code is structured to support the observing workflow:
   - numpy
   - os
   - roger-'s pyrtlsdr library
-  - subprocess (functions in utils package use subprocess features requiring Python 3.7)
+  - subprocess (functions in utils package for turning on/off biast use subprocess features requiring Python 3.7)
   - time
 - librtlsdr
 - rtl_biast (optional, enables powering an external low noise amplifier through the RTL-SDR coax)
