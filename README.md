@@ -33,7 +33,9 @@ The code is structured to support the observing workflow:
   - Implementations of optional hardware interface features as described above
 
 \* Expected to be implemented before 2020
+
 \*\* Implementation date undetermined
+
 ## Known dependencies:
 - Python 3
   - gpiozero (optional, enables addressing noise source switches with GPIO pins)
