@@ -69,3 +69,4 @@ def noise_src(noise_ctrl, state):
         assert 0 == noise_ctrl.value, '{} did not return LOW, noise source not switched off.'.format(noise_ctrl.pin)
 
     return
+
