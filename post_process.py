@@ -86,9 +86,9 @@ def f_throw_fold(freqs_on, freqs_off, p_on, p_off):
     bin_throw = np.abs(fthrow_idx - fc_idx)
 
     # Folding procedure is a shift-and-add-negate, then average
-    p_diff = p_off - p_on
+    p_diff = p_on - p_off
     # Average the spectrum of interest with the spectrum off by fthrow
-    p_fold = (p_diff[bin_throw:] + p_diff[0:len(p_diff)-bin_throw]) / 2.
+    p_fold = (p_diff[bin_throw:] - p_diff[0:len(p_diff)-bin_throw]) / 2.
     # Get the folded, upper segment of freqs to return it, throwing away the 
     # part the two spectra did not have in common.
     freqs_fold = freqs_on[bin_throw:]
