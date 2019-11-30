@@ -148,41 +148,47 @@ def run_spectrum_int( NFFT, gain, rate, fc, t_int ):
         print('  gain: %d dB' % sdr.gain)
         print('  num samples per call: {}'.format(NFFT))
         print('  requested integration time: {}s'.format(t_int))
+        N = int(sdr.rs * t_int)
+        num_loops = int(N/NFFT)+1
+        print('  => num samples to collect: {}'.format(N))
+        print('  => est. num of calls: {}'.format(num_loops))
 
-        # Set up arrays to store total power calculated from I-Q samples
+        # Set up arrays to store power spectrum calculated from I-Q samples
+        freqs = np.zeros(NFFT)
         p_xx_tot = np.zeros(NFFT)
         cnt = 0
 
         # Set the baseline time
         start_time = time.time()
         print('Integration began at {}'.format(time.strftime('%a, %d %b %Y %H:%M:%S', time.localtime(start_time))))
-        # Time integration loop
         # Since we essentially sample as long as we want on each frequency,
-        # Estimate the power spectrum by Bartlett's method:
-        while time.time()-start_time < t_int:
-            iq = np.zeros(NFFT, dtype=complex)
-            iq += sdr.read_samples(NFFT)
-            cnt += 1
+        # Estimate the power spectrum by Bartlett's method.
+        # Following https://en.wikipedia.org/wiki/Bartlett%27s_method: 
+        # Use scipy.signal.welch to compute 1 periodogram for each set of 
+        # samples taken.
+        # For non-overlapping intervals, which we have because we are 
+        # sampling the timeseries as it comes in, the welch() method is 
+        # equivalent to Bartlett's method.
+        # We therefore have an N=NFFT-point data segment split up into K=1 
+        # non- overlapping segments, of length M=NFFT. This means we can 
+        # call welch() on each set of samples from the SDR, accumulate them,
+        # and average later by the number of spectra taken to reduce the 
+        # noise while still following Barlett's method, and without keeping 
+        # huge arrays of iq samples around in RAM.
+
+        # Time integration loop
+        for cnt in range(num_loops):
+            iq = sdr.read_samples(NFFT)
             
             #p_xx, freqs = psd(iq, NFFT=NFFT, Fs=rate, scale_by_freq=False)
 
-            # Following https://en.wikipedia.org/wiki/Bartlett%27s_method: 
-            # Use scipy.signal.welch to compute 1 periodogram for each freq hop.
-            # For non-overlapping intervals, which we have because we are sampling
-            # the timeseries as it comes in, the welch() method is equivalent to
-            # Bartlett's method.
-            # We therefore have an N=NFFT-point data segment split up into K=1 non-
-            # overlapping segments, of length M=NFFT.
-            # This means we can call welch() on each set of samples from the SDR,
-            # accumulate them, and average later by the number of hops on each freq
-            # to reduce the noise while still following Barlett's method, and
-            # without keeping huge arrays of iq samples around in RAM.
             freqs, p_xx = welch(iq, fs=rate, nperseg=NFFT, noverlap=0, scaling='spectrum', return_onesided=False)
             p_xx_tot += p_xx
         
         end_time = time.time()
         print('Integration ended at {} after {} seconds.'.format(time.strftime('%a, %d %b %Y %H:%M:%S'), end_time-start_time))
         print('{} spectra were measured at {}.'.format(cnt, fc))
+        print('for an effective integration time of {:.2f}s'.format(NFFT * cnt / rate))
 
         # Unfortunately, welch() with return_onesided=False does a sloppy job
         # of returning the arrays in what we'd consider the "right" order,
