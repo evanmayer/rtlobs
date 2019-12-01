@@ -8,14 +8,15 @@ import os
 import subprocess
 
 
-def biast(state):
+def biast(state, index=0):
     '''
     Turn the bias tee on the device on or off.
     You should configure the path here to call the rtl_biast
     executable on your machine.
 
-    Inputs:b
+    Inputs:
     state (int): nonzero = on, zero = off
+    index (int)(optional): RTL-SDR device index, in the event of more than one SDR
     Returns:
     None
     '''
@@ -27,7 +28,8 @@ def biast(state):
 
     # Ensure the bias tee is turned off, then turn it on.                       
     basepath = os.path.expanduser('~/scratch/')
-    cmd = [os.path.join(basepath, 'rtl_biast', 'build', 'src', 'rtl_biast'),  '-b {}'.format(state)]
+    cmd = [os.path.join(basepath, 'rtl_biast', 'build', 'src', 'rtl_biast'),  '-d {}'.format(index), '-b {}'.format(state)]
+    print(cmd)
     ret = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
 
     if ret.returncode == 0:
