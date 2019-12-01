@@ -29,7 +29,6 @@ def biast(state, index=0):
     # Ensure the bias tee is turned off, then turn it on.                       
     basepath = os.path.expanduser('~/scratch/')
     cmd = [os.path.join(basepath, 'rtl_biast', 'build', 'src', 'rtl_biast'),  '-d {}'.format(index), '-b {}'.format(state)]
-    print(cmd)
     ret = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
 
     if ret.returncode == 0:
