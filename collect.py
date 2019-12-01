@@ -256,7 +256,7 @@ def run_fswitch_int( NFFT, gain, rate, fc, fthrow, t_int ):
         print('  num samples per call: {}'.format(NFFT))
         print('  requested integration time: {}s'.format(t_int))
         N = int(sdr.rs * t_int)
-        num_loops = (N//NFFT)+1
+        num_loops = (N//NFFT)
         print('  => num samples to collect: {}'.format(N))
         print('  => est. num of calls: {}'.format(num_loops))
 
@@ -273,7 +273,7 @@ def run_fswitch_int( NFFT, gain, rate, fc, fthrow, t_int ):
 
         # Swap between the two specified frequencies, integrating signal.
         # Time integration loop
-        for cnt in range(num_loops):
+        for cnt in range(num_loops+1):
             tick = (cnt%2 == 0)
             if tick:
                 sdr.fc = fc
