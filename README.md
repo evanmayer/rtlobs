@@ -1,5 +1,6 @@
 # rtl-obs:
 The RTL-SDR Radio Observatory.
+Turn your RTL-SDR dongle into a radio astronomy workhorse. Perform functions such as total power integration, taking spectra to observe the 21cm hydrogen line, and performing spectral observations in frequency-switched mode to eliminate baseline shape and increase signal-to-noise.
 
 ## Features:
 The code is structured to support the observing workflow:
@@ -8,7 +9,7 @@ The code is structured to support the observing workflow:
 - Collection:
   - Functions for using the RTL-SDR as total-power radiometer, integrating I-Q samples for use in an estimate of the total power incident over an amount of time
   - Functions for recording time-averaged spectra
-  - Functions for recording frequency-switched spectra on-the-fly*
+  - Functions for recording frequency-switched spectra on-the-fly
 - Post-processing:
   - Basic spectrum plotting
   - Applying calibration to recorded spectra*
