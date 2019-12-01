@@ -49,6 +49,7 @@ For now, you'll have to check out the repo by the usual means, and write your ow
 ## Known dependencies:
 - Python 3
   - gpiozero (optional, enables addressing noise source switches with GPIO pins)
+  - matplotlib
   - numpy
   - os
   - roger-'s pyrtlsdr library
