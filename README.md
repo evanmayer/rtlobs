@@ -13,15 +13,13 @@ The code is structured to support the observing workflow:
   - Functions for recording frequency-switched spectra on-the-fly
 - Post-processing:
   - Basic spectrum plotting
-  - Applying calibration to recorded spectra*
+  - Applying calibration to recorded spectra\*\*
   - Applying the frequency-switching folding technique to spectra taken at two different frequencies
   - Baseline subtraction of one spectrum from another
-  - Doppler relative velocity shift calculation for spectra given galactic coordinates**
+  - Doppler relative velocity shift calculation for spectra given galactic coordinatesi\*\*
 - Utilities:
   - Subroutines shared between functions
   - Implementations of optional hardware interface features as described below
-
-\* Expected to be implemented before 2020
 
 \*\* Implementation date undetermined
 
