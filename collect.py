@@ -230,7 +230,7 @@ def run_spectrum_int( NFFT, gain, rate, fc, t_int ):
 def run_fswitch_int( NFFT, gain, rate, fc, fthrow, t_int, fswitch=5):
     '''
     Note: Because a significant time penalty is introduced for each retuning,
-          a minimum frequency switching rate of 5 Hz is adopted to help 
+          a maximum frequency switching rate of 10 Hz is adopted to help 
           reduce the fraction of observation time spent retuning the SDR
           for a given effective integration time.
           As a consequence, the minimum integration time is 2*(1/fswitch)
@@ -257,8 +257,8 @@ def run_fswitch_int( NFFT, gain, rate, fc, fthrow, t_int, fswitch=5):
     # Check inputs:
     assert t_int >= 2.0 * (1.0/fswitch), '''At t_int={} s, frequency switching at fswitch={} Hz means the switching period is longer than integration time. Please choose a longer integration time or shorter switching frequency to ensure enough integration time to dwell on each frequency.'''.format(t_int, fswitch)
 
-    if fswitch > 5:
-        print('''Warning: high frequency switching values mean more SDR retunings. A greater fraction of observation time will be spent retuning the SDR, resulting in long wait times to reach the requested effective integration time.''')
+    if fswitch > 10:
+        print('''Warning: high frequency switching values mean more SDR retunings. A greater fraction of observation time will be spent retuning the SDR, resulting in longer wait times to reach the requested effective integration time.''')
 
     print('Initializing rtl-sdr with pyrtlsdr:')
     sdr = RtlSdr()
@@ -276,7 +276,7 @@ def run_fswitch_int( NFFT, gain, rate, fc, fthrow, t_int, fswitch=5):
         # Total number of samples to collect
         N = int(sdr.rs * t_int)
         # Number of samples on each frequency dwell
-        N_dwell = int(sdr.rs * (1.0 / fswitch) / 2.0)
+        N_dwell = int(sdr.rs * (1.0 / fswitch))
         # Number of calls to SDR on each frequency
         num_loops = N_dwell//NFFT
         # Number of dwells on each frequency
@@ -302,12 +302,11 @@ def run_fswitch_int( NFFT, gain, rate, fc, fthrow, t_int, fswitch=5):
         # Time integration loop
         for i in range(num_dwells):
             tick = (i%2 == 0)
+            if tick:
+                sdr.fc = fc
+            else:
+                sdr.fc = fthrow
             for j in range(num_loops):
-                if tick:
-                    sdr.fc = fc
-                else:
-                    sdr.fc = fthrow
-
                 iq = sdr.read_samples(NFFT)
 
                 if tick:
