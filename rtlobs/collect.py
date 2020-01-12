@@ -227,7 +227,7 @@ def run_spectrum_int( NFFT, gain, rate, fc, t_int ):
     return freqs, p_avg
 
 
-def run_fswitch_int( NFFT, gain, rate, fc, fthrow, t_int, fswitch=5):
+def run_fswitch_int( NFFT, gain, rate, fc, fthrow, t_int, fswitch=10):
     '''
     Note: Because a significant time penalty is introduced for each retuning,
           a maximum frequency switching rate of 10 Hz is adopted to help 
