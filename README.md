@@ -5,7 +5,6 @@ Turn your RTL-SDR dongle into a radio astronomy workhorse. Perform functions suc
 
 ### A quick example:
 ```python
-import utils as ut
 import collect as col
 import post_process as post
 # 1024-bin resolution power spectrum 
@@ -20,7 +19,12 @@ f.show()
 ```
 
 ## Installation:
-For now, you'll have to check out the repo by the usual means, and write your own scripts to use the utilities, or use them interactively in IPython or jupyter or something similar. Soon, an installation utility will be provided.
+Until rtl-obs is on PyPI, I'd recommend installing from git:
+
+`git clone https://github.com/evanmayer/rtl-obs.git`
+
+and handling access to the modules yourself, either through `sys.path` manipulation or by developing your scripts inside the checkout.
+A `setup.py` file is included for `python setup.py install`, in case you're using virtual environments or don't care about polluting your python install. This will work better once `pip` install is supported.
 
 ## Known dependencies:
 - Python 3
@@ -29,7 +33,7 @@ For now, you'll have to check out the repo by the usual means, and write your ow
   - numpy
   - os
   - roger-'s pyrtlsdr library
-  - subprocess (functions in utils package for turning on/off biast use subprocess features requiring Python 3.7)
+  - subprocess (optional, functions in utils package for turning on/off biast use subprocess features requiring Python 3.7)
   - time
 - librtlsdr
 - rtl_biast (optional, enables powering an external low noise amplifier through the RTL-SDR coax)
