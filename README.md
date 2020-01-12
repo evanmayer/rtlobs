@@ -11,7 +11,7 @@ from rtlobs import post_process as post
 # 49.6 dB of RtlSdr gain
 # 2.32 MHz sample rate/bandwidth
 # 1.420 GHz center frequency
-# 100 sec integration time
+# 10 sec integration time
 f, p = col.run_spectrum_int(1024, 49.6, 2.32e6, 1.420e9, 10)
 # Show the figure containing the plotted spectrum
 fig = post.plot_spectrum(f, p, savefig='../images/spectrum_int.png')
