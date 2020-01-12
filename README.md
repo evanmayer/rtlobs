@@ -3,34 +3,12 @@ The RTL-SDR Radio Observatory.
 
 Turn your RTL-SDR dongle into a radio astronomy workhorse. Perform functions such as total power integration, taking spectra to observe the 21cm hydrogen line, and performing spectral observations in frequency-switched mode to eliminate baseline shape and increase signal-to-noise.
 
-## Features:
-The code is structured to support the observing workflow:
-- Calibration:
-  - A function implementing Y-factor calibration using two integrated total power values from measuring hot and cold loads and their respective known temperatures using the total-power radiometer implemented below.
-- Collection:
-  - Functions for using the RTL-SDR as total-power radiometer, integrating I-Q samples for use in an estimate of the total power incident over an amount of time
-  - Functions for recording time-averaged spectra
-  - Functions for recording frequency-switched spectra on-the-fly
-- Post-processing:
-  - Basic spectrum plotting
-  - Applying calibration to recorded spectra\*\*
-  - Applying the frequency-switching folding technique to spectra taken at two different frequencies
-  - Baseline subtraction of one spectrum from another
-  - Doppler relative velocity shift calculation for spectra given galactic coordinates\*\*
-- Utilities:
-  - Subroutines shared between functions
-  - Implementations of optional hardware interface features as described below
-
-\*\* Implementation date undetermined
-
 ### A quick example:
 ```python
 import utils as ut
 import collect as col
 import post_process as post
-# Enable the Rtl-Sdr on-board bias tee to power an amp
-ut.biast(1)
-# 1024-bin power spectrum 
+# 1024-bin resolution power spectrum 
 # 49.6 dB of RtlSdr gain
 # 2.32 MHz sample rate/bandwidth
 # 1.420 GHz center frequency
@@ -55,6 +33,26 @@ For now, you'll have to check out the repo by the usual means, and write your ow
   - time
 - librtlsdr
 - rtl_biast (optional, enables powering an external low noise amplifier through the RTL-SDR coax)
+
+## Features:
+The code is structured to support the observing workflow:
+- Calibration:
+  - A function implementing Y-factor calibration using two integrated total power values from measuring hot and cold loads and their respective known temperatures using the total-power radiometer implemented below.
+- Collection:
+  - Functions for using the RTL-SDR as total-power radiometer, integrating I-Q samples for use in an estimate of the total power incident over an amount of time
+  - Functions for recording time-averaged spectra
+  - Functions for recording frequency-switched spectra on-the-fly
+- Post-processing:
+  - Basic spectrum plotting
+  - Applying calibration to recorded spectra\*\*
+  - Applying the frequency-switching folding technique to spectra taken at two different frequencies
+  - Baseline subtraction of one spectrum from another
+  - Doppler relative velocity shift calculation for spectra given galactic coordinates\*\*
+- Utilities:
+  - Subroutines shared between functions
+  - Implementations of optional hardware interface features as described below
+
+\*\* Working on it
 
 ## Assumptions:
 It is assumed that you have an RtlSdr device set up with the proper drivers on your machine. Although this code can run on Windows or Linux, it was developed and tested on a Raspberry Pi 4. I try my best to make the core observation functions cross-platform, and avoid assumptions about processor speed and memory. Hardware-interfacing functions may require additional customization for your hardware and platform.
