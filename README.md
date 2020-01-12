@@ -19,6 +19,8 @@ f.show()
 ```
 ![Time-averaged power spectral density estimate](https://github.com/evanmayer/rtl-obs/blob/master/images/spectrum_int.png)
 
+Since this spectrum is taken indoors with a V-dipole antenna next to a desktop computer, we can see quite a bit of RFI near 1.42 GHz!
+
 ## Installation:
 Until rtl-obs is on PyPI, I'd recommend installing from git:
 
