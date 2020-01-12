@@ -20,7 +20,9 @@ f.show()
 
 ## Installation:
 Until rtl-obs is on PyPI, I'd recommend installing from git:
+
 `git clone https://github.com/evanmayer/rtl-obs.git`
+
 A `setup.py` file is included for `python setup.py install`, in case you're using virtual environments or don't care about polluting your python install. This will work better once `pip` install is supported.
 
 ## Known dependencies:
