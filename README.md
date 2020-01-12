@@ -5,18 +5,19 @@ Turn your RTL-SDR dongle into a radio astronomy workhorse. Perform functions suc
 
 ### A quick example:
 ```python
-import collect as col
-import post_process as post
+from rtlobs import collect as col
+from rtlobs import post_process as post
 # 1024-bin resolution power spectrum 
 # 49.6 dB of RtlSdr gain
 # 2.32 MHz sample rate/bandwidth
 # 1.420 GHz center frequency
 # 100 sec integration time
-freqs, p_xx = col.run_spectrum_int(1024, 49.6, 2.32e6, 1.420e9, 100)
+f, p = col.run_spectrum_int(1024, 49.6, 2.32e6, 1.420e9, 10)
 # Show the figure containing the plotted spectrum
-f = post.plot_spectrum(freqs, p_xx)
+fig = post.plot_spectrum(f, p, savefig='../images/spectrum_int.png')
 f.show()
 ```
+![Time-averaged power spectral density estimate](https://github.com/evanmayer/rtl-obs/blob/master/images/spectrum_int.png)
 
 ## Installation:
 Until rtl-obs is on PyPI, I'd recommend installing from git:
@@ -74,7 +75,6 @@ Several aspects of this code assume the presence of outside hardware:
 - It requires much more fiddling to set up and take observations now than it eventually will. 
 - RTL-SDR devices may not surrender permissions and throw a usb_claim_interface_error -6 if a SIGINT is passed at the wrong time. The USB device should be remounted or the interactive session restarted to regain command of the dongle. A good faith attempt at cleanup has been made with try...finally, and does work most of the time.
 - I write a lot of comments, which you might not want to read.
-- I need to add more pretty pictures.
 
 Contact me here with your issues and questions and we'll work together to make them right. 
 
