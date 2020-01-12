@@ -16,7 +16,7 @@ The code is structured to support the observing workflow:
   - Applying calibration to recorded spectra\*\*
   - Applying the frequency-switching folding technique to spectra taken at two different frequencies
   - Baseline subtraction of one spectrum from another
-  - Doppler relative velocity shift calculation for spectra given galactic coordinatesi\*\*
+  - Doppler relative velocity shift calculation for spectra given galactic coordinates\*\*
 - Utilities:
   - Subroutines shared between functions
   - Implementations of optional hardware interface features as described below
