@@ -5,6 +5,7 @@ Library for data collection functions on an rtl-sdr based radio telescope.
 '''
 
 import numpy as np
+from scipy.signal import welch
 import sys
 import time
 
@@ -134,7 +135,6 @@ def run_spectrum_int( NFFT, gain, rate, fc, t_int ):
     freqs:    Frequencies of the resulting spectrum, centered at fc (Hz), numpy array
     p_xx_avg: Power spectral density spectrum (dB/Hz) numpy array,
     '''
-    from scipy.signal import welch
     import rtlsdr.helpers as helpers
 
     print('Initializing rtl-sdr with pyrtlsdr:')
@@ -250,8 +250,7 @@ def run_fswitch_int( NFFT, gain, rate, fc, fthrow, t_int, fswitch=5):
     freqs_fold: Frequencies of the spectrum resulting from folding according to the folding method implemented in the f_throw_fold (post_process module)
     p_fold:     Folded frequency-switched power spectral density, centered at fc,(dB/Hz) numpy array.
     '''
-    from scipy.signal import welch
-    from post_process import f_throw_fold 
+    from .post_process import f_throw_fold 
     import rtlsdr.helpers as helpers
 
     # Check inputs:
