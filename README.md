@@ -5,7 +5,6 @@ Turn your RTL-SDR dongle into a radio astronomy workhorse. Perform functions suc
 
 ### A quick example:
 ```python
-import utils as ut
 import collect as col
 import post_process as post
 # 1024-bin resolution power spectrum 
