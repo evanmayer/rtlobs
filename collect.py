@@ -88,11 +88,11 @@ def run_total_power_int( num_samp, gain, rate, fc, t_int ):
         @helpers.limit_calls(N / num_samp)
         def p_tot_callback(iq, context):
             # The below is a total power measurement equivalent to
-            # P = V^2 / R = (sqrt(I^2 + Q^2))^2 = (I^2 + Q^2) / 1,
-            # setting R=1 since it cancels out when using these in a 
-            # calibration.
+            # P = V^2 / R = (sqrt(I^2 + Q^2))^2 = (I^2 + Q^2) / 50,
+            # setting R=50 somewhat arbitrarily since it cancels out when using
+            # these in a calibration.
             global p_tot 
-            p_tot += np.sum(np.real(iq*np.conj(iq)))
+            p_tot += np.sum(np.real(iq*np.conj(iq)) / 50.)
             global cnt 
             cnt += 1
         sdr.read_samples_async(p_tot_callback, num_samples=num_samp)
@@ -137,6 +137,7 @@ def run_spectrum_int( NFFT, gain, rate, fc, t_int ):
     from scipy.signal import welch
     import rtlsdr.helpers as helpers
 
+    print('Initializing rtl-sdr with pyrtlsdr:')
     sdr = RtlSdr()
 
     try:
@@ -151,7 +152,7 @@ def run_spectrum_int( NFFT, gain, rate, fc, t_int ):
         N = int(sdr.rs * t_int)
         num_loops = int(N/NFFT)+1
         print('  => num samples to collect: {}'.format(N))
-        print('  => est. num of calls: {}'.format(num_loops))
+        print('  => est. num of calls: {}'.format(num_loops-1))
 
         # Set up arrays to store power spectrum calculated from I-Q samples
         freqs = np.zeros(NFFT)
@@ -180,7 +181,7 @@ def run_spectrum_int( NFFT, gain, rate, fc, t_int ):
         for cnt in range(num_loops):
             iq = sdr.read_samples(NFFT)
             
-            freqs, p_xx = welch(iq, fs=rate, nperseg=NFFT, noverlap=0, scaling='spectrum', return_onesided=False)
+            freqs, p_xx = welch(iq, fs=rate, nperseg=NFFT, noverlap=0, scaling='density', return_onesided=False)
             p_xx_tot += p_xx
         
         end_time = time.time()
@@ -226,8 +227,15 @@ def run_spectrum_int( NFFT, gain, rate, fc, t_int ):
     return freqs, p_avg
 
 
-def run_fswitch_int( NFFT, gain, rate, fc, fthrow, t_int ):
+def run_fswitch_int( NFFT, gain, rate, fc, fthrow, t_int, fswitch=5):
     '''
+    Note: Because a significant time penalty is introduced for each retuning,
+          a minimum frequency switching rate of 5 Hz is adopted to help 
+          reduce the fraction of observation time spent retuning the SDR
+          for a given effective integration time.
+          As a consequence, the minimum integration time is 2*(1/fswitch)
+          to ensure the user gets at least one spectrum taken on each
+          frequency of interest.
     Inputs:
     NFFT:     Number of elements to sample from the SDR IQ timeseries: powers of 2 are most efficient
     gain:     Requested SDR gain (dB)
@@ -235,6 +243,8 @@ def run_fswitch_int( NFFT, gain, rate, fc, fthrow, t_int ):
     fc:       Base center frequency (Hz)
     fthrow:   Alternate frequency (Hz)
     t_int:    Total effective integration time (s)
+    Kwargs:
+    fswitch:  Frequency of switching between fc and fthrow (Hz)
 
     Returns:
     freqs_fold: Frequencies of the spectrum resulting from folding according to the folding method implemented in the f_throw_fold (post_process module)
@@ -244,6 +254,13 @@ def run_fswitch_int( NFFT, gain, rate, fc, fthrow, t_int ):
     from post_process import f_throw_fold 
     import rtlsdr.helpers as helpers
 
+    # Check inputs:
+    assert t_int >= 2.0 * (1.0/fswitch), '''At t_int={} s, frequency switching at fswitch={} Hz means the switching period is longer than integration time. Please choose a longer integration time or shorter switching frequency to ensure enough integration time to dwell on each frequency.'''.format(t_int, fswitch)
+
+    if fswitch > 5:
+        print('''Warning: high frequency switching values mean more SDR retunings. A greater fraction of observation time will be spent retuning the SDR, resulting in long wait times to reach the requested effective integration time.''')
+
+    print('Initializing rtl-sdr with pyrtlsdr:')
     sdr = RtlSdr()
 
     try:
@@ -255,10 +272,20 @@ def run_fswitch_int( NFFT, gain, rate, fc, fthrow, t_int ):
         print('  gain: %d dB' % sdr.gain)
         print('  num samples per call: {}'.format(NFFT))
         print('  requested integration time: {}s'.format(t_int))
+        
+        # Total number of samples to collect
         N = int(sdr.rs * t_int)
-        num_loops = (N//NFFT)
+        # Number of samples on each frequency dwell
+        N_dwell = int(sdr.rs * (1.0 / fswitch) / 2.0)
+        # Number of calls to SDR on each frequency
+        num_loops = N_dwell//NFFT
+        # Number of dwells on each frequency
+        num_dwells = N//N_dwell
         print('  => num samples to collect: {}'.format(N))
-        print('  => est. num of calls: {}'.format(num_loops))
+        print('  => est. num of calls: {}'.format(N//NFFT))
+        print('  => num samples on each dwell: {}'.format(N_dwell))
+        print('  => est. num of calls on each dwell: {}'.format(num_loops))
+        print('  => num dwells total: {}'.format(num_dwells))
 
         # Set up arrays to store power spectrum calculated from I-Q samples
         freqs_on = np.zeros(NFFT)
@@ -273,21 +300,23 @@ def run_fswitch_int( NFFT, gain, rate, fc, fthrow, t_int ):
 
         # Swap between the two specified frequencies, integrating signal.
         # Time integration loop
-        for cnt in range(num_loops+1):
-            tick = (cnt%2 == 0)
-            if tick:
-                sdr.fc = fc
-            else:
-                sdr.fc = fthrow
+        for i in range(num_dwells):
+            tick = (i%2 == 0)
+            for j in range(num_loops):
+                if tick:
+                    sdr.fc = fc
+                else:
+                    sdr.fc = fthrow
 
-            iq = sdr.read_samples(NFFT)
+                iq = sdr.read_samples(NFFT)
 
-            if tick:
-                freqs_on, p_xx = welch(iq, fs=rate, nperseg=NFFT, noverlap=0, scaling='spectrum', return_onesided=False)
-                p_xx_on += p_xx
-            else:
-                freqs_off, p_xx = welch(iq, fs=rate, nperseg=NFFT, noverlap=0, scaling='spectrum', return_onesided=False)
-                p_xx_off += p_xx
+                if tick:
+                    freqs_on, p_xx = welch(iq, fs=rate, nperseg=NFFT, noverlap=0, scaling='density', return_onesided=False)
+                    p_xx_on += p_xx
+                else:
+                    freqs_off, p_xx = welch(iq, fs=rate, nperseg=NFFT, noverlap=0, scaling='density', return_onesided=False)
+                    p_xx_off += p_xx
+                cnt += 1
         
         end_time = time.time()
         print('Integration ended at {} after {} seconds.'.format(time.strftime('%a, %d %b %Y %H:%M:%S'), end_time-start_time))

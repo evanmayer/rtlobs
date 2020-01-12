@@ -27,9 +27,9 @@ def biast(state, index=0):
         print('Disabling bias tee.')
 
     # Ensure the bias tee is turned off, then turn it on.                       
-    basepath = os.path.expanduser('~/scratch/')
-    cmd = [os.path.join(basepath, 'rtl_biast', 'build', 'src', 'rtl_biast'),  '-d {}'.format(index), '-b {}'.format(state)]
-    ret = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+    basepath = os.path.expanduser('~/github/')
+    cmd = [os.path.join(basepath, 'rtl-sdr-blog', 'build', 'src', 'rtl_biast'),  '-d {}'.format(index), '-b {}'.format(state)]
+    ret = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)#, text=True)
 
     if ret.returncode == 0:
         print(ret.stdout)
