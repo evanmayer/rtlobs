@@ -24,6 +24,7 @@ def plot_spectrum(freqs, powers, savefig=None):
 
     Returns:
     fig:      matplotlib figure handle to the generated plot
+    ax:       in case you want to add more traces
     '''
 
     fig = plt.figure()
@@ -39,7 +40,7 @@ def plot_spectrum(freqs, powers, savefig=None):
     if savefig:
         plt.savefig(savefig)
 
-    return fig
+    return fig, ax
 
 
 def f_throw_fold(freqs_on, freqs_off, p_on, p_off):
@@ -56,6 +57,8 @@ def f_throw_fold(freqs_on, freqs_off, p_on, p_off):
 
     This is meant to implement the method described here:
     http://herschel.esac.esa.int/hcss-doc-15.0/load/hifi_um/html/hcb_pfsw.html 
+    Which was in turn taken from:
+    https://aas.aanda.org/articles/aas/abs/1997/10/ds1263/ds1263.html
 
     Inputs:
     freqs_on:   Array of frequencies in power spectrum, taken at the target 
@@ -64,14 +67,14 @@ def f_throw_fold(freqs_on, freqs_off, p_on, p_off):
                 the target frequency. For "in-band" switching mode, this
                 should still contain the spectral line of interest.
 
-    p_on:       Array of power spectral density estimates (assumed dB/Hz 
-                uncalibrated), taken at the target frequency
-    p_off:      Array of power spectral density estimates (assumed dB/Hz 
-                uncalibrated), taken shifted off of the target frequency.
+    p_on:       Array, a power spectrum estimate (assumed uncalibrated 
+                V^2), taken at the target frequency
+    p_off:      Array, a power spectrum estimate (assumed uncalibrated
+                V^2), taken shifted off of the target frequency.
 
     Returns:
     freqs_fold: Array of frequencies at which the two switched spectra overlap
-    p_fold:     Folded PSD spectrum
+    p_fold:     Folded power spectrum in uncalibrated power units
     '''
 
     # Shift-and-add to fold
@@ -86,6 +89,8 @@ def f_throw_fold(freqs_on, freqs_off, p_on, p_off):
     bin_throw = np.abs(fthrow_idx - fc_idx)
 
     # Folding procedure is a shift-and-add-negate, then average
+    # Work in absolute values instead of ratios so subtraction and 
+    # division work out right
     p_diff = p_on - p_off
     # Average the spectrum of interest with the spectrum off by fthrow
     p_fold = (p_diff[bin_throw:] - p_diff[0:len(p_diff)-bin_throw]) / 2.

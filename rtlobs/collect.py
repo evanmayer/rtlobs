@@ -135,7 +135,6 @@ def run_spectrum_int( NFFT, gain, rate, fc, t_int ):
     freqs:    Frequencies of the resulting spectrum, centered at fc (Hz), numpy array
     p_xx_avg: Power spectral density spectrum (dB/Hz) numpy array,
     '''
-    import rtlsdr.helpers as helpers
 
     print('Initializing rtl-sdr with pyrtlsdr:')
     sdr = RtlSdr()
@@ -181,7 +180,7 @@ def run_spectrum_int( NFFT, gain, rate, fc, t_int ):
         for cnt in range(num_loops):
             iq = sdr.read_samples(NFFT)
             
-            freqs, p_xx = welch(iq, fs=rate, nperseg=NFFT, noverlap=0, scaling='density', return_onesided=False)
+            freqs, p_xx = welch(iq, fs=rate, nperseg=NFFT, noverlap=0, scaling='density', detrend=False, return_onesided=False)
             p_xx_tot += p_xx
         
         end_time = time.time()
@@ -248,7 +247,7 @@ def run_fswitch_int( NFFT, gain, rate, fc, fthrow, t_int, fswitch=10):
 
     Returns:
     freqs_fold: Frequencies of the spectrum resulting from folding according to the folding method implemented in the f_throw_fold (post_process module)
-    p_fold:     Folded frequency-switched power spectral density, centered at fc,(dB/Hz) numpy array.
+    p_fold:     Folded frequency-switched power, centered at fc,(uncalibrated V^2) numpy array.
     '''
     from .post_process import f_throw_fold 
     import rtlsdr.helpers as helpers
@@ -309,10 +308,10 @@ def run_fswitch_int( NFFT, gain, rate, fc, fthrow, t_int, fswitch=10):
                 iq = sdr.read_samples(NFFT)
 
                 if tick:
-                    freqs_on, p_xx = welch(iq, fs=rate, nperseg=NFFT, noverlap=0, scaling='density', return_onesided=False)
+                    freqs_on, p_xx = welch(iq, fs=rate, nperseg=NFFT, noverlap=0, scaling='spectrum', detrend=False, return_onesided=False)
                     p_xx_on += p_xx
                 else:
-                    freqs_off, p_xx = welch(iq, fs=rate, nperseg=NFFT, noverlap=0, scaling='density', return_onesided=False)
+                    freqs_off, p_xx = welch(iq, fs=rate, nperseg=NFFT, noverlap=0, scaling='spectrum', detrend=False, return_onesided=False)
                     p_xx_off += p_xx
                 cnt += 1
         
@@ -345,13 +344,13 @@ def run_fswitch_int( NFFT, gain, rate, fc, fthrow, t_int, fswitch=10):
         p_xx_off[half_len:] = tmp_first
 
         # Compute the average power spectrum based on the number of spectra read
-        p_avg_on  = 10.*np.log10(p_xx_on  / cnt)
-        p_avg_off = 10.*np.log10(p_xx_off / cnt)
+        p_avg_on  = p_xx_on  / cnt
+        p_avg_off = p_xx_off / cnt
         # Shift frequency spectra back to the intended range
         freqs_on = freqs_on + fc
         freqs_off = freqs_off + fthrow
 
-        # Fold switched spectra
+        # Fold switched power spectra
         freqs_fold, p_fold = f_throw_fold(freqs_on, freqs_off, p_avg_on, p_avg_off)
 
         # nice and tidy
