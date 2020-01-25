@@ -14,7 +14,7 @@ from rtlobs import post_process as post
 # 10 sec integration time
 f, p = col.run_spectrum_int(1024, 49.6, 2.32e6, 1.420e9, 10)
 # Show the figure containing the plotted spectrum
-fig = post.plot_spectrum(f, p, savefig='../images/spectrum_int.png')
+fig, ax = post.plot_spectrum(f, p, savefig='../images/spectrum_int.png')
 f.show()
 ```
 ![Time-averaged power spectral density estimate](https://github.com/evanmayer/rtl-obs/blob/master/images/spectrum_int.png)
