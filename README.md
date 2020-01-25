@@ -37,8 +37,10 @@ Python 3 libraries
   - time
 Compiled libraries:
   - librtlsdr
+  
 ## Optional dependencies:
 These are required for additional controls based on features your hardware may or may not have.
+
 Libraries:
 - gpiozero (optional, enables addressing noise source switches with GPIO pins)
 - subprocess (optional, functions in utils package for turning on/off biast use subprocess features requiring Python >=3.7)
