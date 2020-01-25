@@ -26,8 +26,8 @@ Until rtl-obs is on PyPI, I'd recommend installing from git:
 
 `git clone https://github.com/evanmayer/rtl-obs.git`
 
-and handling access to the modules yourself, either through `sys.path` manipulation or by developing your scripts inside the checkout.
-A `setup.py` file is included for `python setup.py install`, in case you're using virtual environments or don't care about polluting your python install. This will work better once `pip` install is supported.
+and handling access to the modules yourself, either through setting up your `sys.path` or by simply developing your scripts inside the checkout. Making an observing routine using jupyter notebooks works great!
+A `setup.py` file is included for `python setup.py install`, in case you're using virtual environments or don't mind a messy uninstall if you decide you don't want rtl-obs down the road. This will work better once `pip` install is supported.
 
 ## Known dependencies:
 Python 3 libraries:
