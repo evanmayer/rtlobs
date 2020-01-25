@@ -30,20 +30,22 @@ and handling access to the modules yourself, either through `sys.path` manipulat
 A `setup.py` file is included for `python setup.py install`, in case you're using virtual environments or don't care about polluting your python install. This will work better once `pip` install is supported.
 
 ## Known dependencies:
-Python 3 libraries
+Python 3 libraries:
   - matplotlib
   - numpy
   - roger-'s pyrtlsdr library
   - time
+  
 Compiled libraries:
   - librtlsdr
   
 ## Optional dependencies:
 These are required for additional controls based on features your hardware may or may not have.
 
-Libraries:
+Python 3 libraries:
 - gpiozero (optional, enables addressing noise source switches with GPIO pins)
 - subprocess (optional, functions in utils package for turning on/off biast use subprocess features requiring Python >=3.7)
+
 Binaries:
 - rtl_biast (optional, enables control for powering an external low noise amplifier through the RTL-SDR coax)
 
