@@ -1,4 +1,4 @@
-# rtl-obs:
+# rtlobs:
 The RTL-SDR Radio Observatory.
 
 Turn your RTL-SDR dongle into a radio astronomy workhorse. Perform functions such as total power integration, taking spectra to observe the 21cm hydrogen line, and performing spectral observations in frequency-switched mode to eliminate baseline shape and increase signal-to-noise.
@@ -22,12 +22,12 @@ f.show()
 Since this spectrum is taken indoors with a V-dipole antenna next to a desktop computer, we can see quite a bit of RFI near 1.42 GHz!
 
 ## Installation:
-Until rtl-obs is on PyPI, I'd recommend installing from git:
+Until rtlobs is on PyPI, I'd recommend installing from git:
 
-`git clone https://github.com/evanmayer/rtl-obs.git`
+`git clone https://github.com/evanmayer/rtlobs.git`
 
 and handling access to the modules yourself, either through setting up your `sys.path` or by simply developing your scripts inside the checkout. Making an observing routine using jupyter notebooks works great!
-A `setup.py` file is included for `python setup.py install`, in case you're using virtual environments or don't mind a messy uninstall if you decide you don't want rtl-obs down the road. This will work better once `pip` install is supported.
+A `setup.py` file is included for `python setup.py install`, in case you're using virtual environments or don't mind a messy uninstall if you decide you don't want rtlobs down the road. This will work better once `pip` install is supported.
 
 ## Known dependencies:
 Python 3 libraries:
