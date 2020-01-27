@@ -178,7 +178,7 @@ def run_spectrum_int( num_samp, nbins, gain, rate, fc, t_int ):
         # Estimate the power spectrum by Bartlett's method.
         # Following https://en.wikipedia.org/wiki/Bartlett%27s_method: 
         # Use scipy.signal.welch to compute one spectrum for each timeseries
-        # of samples from the a call to the SDR.
+        # of samples from a call to the SDR.
         # The scipy.signal.welch() method with noverlap=0 is equivalent to 
         # Bartlett's method, which estimates the spectral content of a time-
         # series by splitting our num_samp array into K segments of length
