@@ -5,7 +5,7 @@ Library for data collection functions on an rtl-sdr based radio telescope.
 '''
 
 import numpy as np
-from scipy.signal import welch
+from scipy.signal import welch, get_window
 import sys
 import time
 
@@ -31,17 +31,15 @@ def meas_brightness_temp(num_samp, gain, rate, fc, t_int, T_sys):
     '''
 
 
-def run_total_power_int( num_samp, gain, rate, fc, t_int ):
+def run_total_power_int(num_samp, gain, rate, fc, t_int):
     '''
     Implement a total-power radiometer. Raw, uncalibrated power values.
 
     Inputs:
-    num_samp:   Number of elements to sample from the SDR IQ timeseries.
-                2**11 recommended based on testing my rtl-sdr.com v3 dongle.
+    num_samp:   Number of elements to sample from the SDR IQ timeseries per call
     gain:       Requested SDR gain (dB)
     rate:       SDR sample rate, intrinsically tied to bandwidth in SDRs (Hz)
-
-    fc:         Base center frequency (Hz)
+    fc:         Bandpass center frequency (Hz)
     t_int:      Total integration time (s)
 
     Returns:
@@ -58,8 +56,8 @@ def run_total_power_int( num_samp, gain, rate, fc, t_int ):
         sdr.rs = rate
         sdr.fc = fc
         sdr.gain = gain
-        print('  sample rate: {} MHz'.format(sdr.rs/1e6))
-        print('  center frequency {} MHz'.format(sdr.fc/1e6))
+        print('  sample rate: {} MHz'.format(sdr.rs / 1e6))
+        print('  center frequency {} MHz'.format(sdr.fc / 1e6))
         print('  gain: {} dB'.format(sdr.gain))
         print('  num samples per call: {}'.format(num_samp))
         print('  requested integration time: {}s'.format(t_int))
@@ -70,7 +68,7 @@ def run_total_power_int( num_samp, gain, rate, fc, t_int ):
         # Nyquist sample a signal of band-limited noise dv with only rs * tau
         # complex samples.
         # The phase content of IQ samples allows the bandlimited signal to be
-        # Nyquist sampled at a data rate of rs = dv complex samples per second 
+        # Nyquist sampled at a data rate of rs = dv complex samples per second
         # rather than the 2* dv required of real samples.
         N = int(sdr.rs * t_int)
         print('  => num samples to collect: {}'.format(N))
@@ -93,7 +91,7 @@ def run_total_power_int( num_samp, gain, rate, fc, t_int ):
             # setting R=50 somewhat arbitrarily since it cancels out when using
             # these in a calibration.
             global p_tot 
-            p_tot += np.sum(np.real(iq*np.conj(iq)) / 50.)
+            p_tot += np.sum(np.real(iq * np.conj(iq)) / 50.)
             global cnt 
             cnt += 1
         sdr.read_samples_async(p_tot_callback, num_samples=num_samp)
@@ -101,10 +99,11 @@ def run_total_power_int( num_samp, gain, rate, fc, t_int ):
         end_time = time.time()
         print('Integration ended at {} after {} seconds.'.format(time.strftime('%a, %d %b %Y %H:%M:%S'), end_time-start_time))
         print('{} calls were made to SDR.'.format(cnt))
-        print('{} samples were measured at {} MHz'.format(cnt*num_samp, fc/1e6))
+        print('{} samples were measured at {} MHz'.format(cnt * num_samp, fc / 1e6))
         print('for an effective integration time of {:.2f}s'.format(num_samp * cnt / rate))
 
-        # Compute the average power value based on the number of measurements we actually did
+        # Compute the average power value based on the number of measurements 
+        # we actually did
         p_avg = p_tot / num_samp / cnt
 
         # nice and tidy
@@ -122,19 +121,33 @@ def run_total_power_int( num_samp, gain, rate, fc, t_int ):
     return p_avg
 
 
-def run_spectrum_int( NFFT, gain, rate, fc, t_int ):
+def run_spectrum_int( num_samp, nbins, gain, rate, fc, t_int ):
     '''
     Inputs:
-    NFFT:     Number of elements to sample from the SDR IQ timeseries: powers of 2 are most efficient
+    num_samp: Number of elements to sample from the SDR IQ per call;
+              use powers of 2
+    nbins:    Number of frequency bins in the resulting power spectrum; powers
+              of 2 are most efficient, and smaller numbers are faster on CPU.
     gain:     Requested SDR gain (dB)
     rate:     SDR sample rate, intrinsically tied to bandwidth in SDRs (Hz)
     fc:       Base center frequency (Hz)
     t_int:    Total effective integration time (s)
 
     Returns:
-    freqs:    Frequencies of the resulting spectrum, centered at fc (Hz), numpy array
-    p_xx_avg: Power spectral density spectrum (dB/Hz) numpy array,
+    freqs:       Frequencies of the resulting spectrum, centered at fc (Hz), 
+                 numpy array
+    p_avg_db_hz: Power spectral density (dB/Hz) numpy array
     '''
+    # Force a choice of window to allow converting to PSD after averaging
+    # power spectra
+    WINDOW = 'hann'
+    # Force a default nperseg for welch() because we need to get a window
+    # of this size later. Use the scipy default 256, but enforce scipy 
+    # conditions on nbins vs. nperseg when nbins gets small. 
+    if nbins < 256:
+        nperseg = nbins
+    else:
+        nperseg = 256
 
     print('Initializing rtl-sdr with pyrtlsdr:')
     sdr = RtlSdr()
@@ -143,56 +156,57 @@ def run_spectrum_int( NFFT, gain, rate, fc, t_int ):
         sdr.rs = rate # Rate of Sampling (intrinsically tied to bandwidth with SDR dongles)
         sdr.fc = fc
         sdr.gain = gain
-        print('  sample rate: %0.6f MHz' % (sdr.rs/1e6))
-        print('  center frequency %0.6f MHz' % (sdr.fc/1e6))
+        print('  sample rate: %0.6f MHz' % (sdr.rs / 1e6))
+        print('  center frequency %0.6f MHz' % (sdr.fc / 1e6))
         print('  gain: %d dB' % sdr.gain)
-        print('  num samples per call: {}'.format(NFFT))
+        print('  num samples per call: {}'.format(num_samp))
+        print('  PSD binning: {} bins'.format(nbins))
         print('  requested integration time: {}s'.format(t_int))
         N = int(sdr.rs * t_int)
-        num_loops = int(N/NFFT)+1
+        num_loops = int(N / num_samp) + 1
         print('  => num samples to collect: {}'.format(N))
-        print('  => est. num of calls: {}'.format(num_loops-1))
+        print('  => est. num of calls: {}'.format(num_loops - 1))
 
         # Set up arrays to store power spectrum calculated from I-Q samples
-        freqs = np.zeros(NFFT)
-        p_xx_tot = np.zeros(NFFT)
+        freqs = np.zeros(nbins)
+        p_xx_tot = np.zeros(nbins)
         cnt = 0
 
         # Set the baseline time
         start_time = time.time()
         print('Integration began at {}'.format(time.strftime('%a, %d %b %Y %H:%M:%S', time.localtime(start_time))))
-        # Since we essentially sample as long as we want on each frequency,
         # Estimate the power spectrum by Bartlett's method.
         # Following https://en.wikipedia.org/wiki/Bartlett%27s_method: 
-        # Use scipy.signal.welch to compute 1 periodogram for each set of 
-        # samples taken.
-        # For non-overlapping intervals, which we have because we are 
-        # sampling the timeseries as it comes in, the welch() method is 
-        # equivalent to Bartlett's method.
-        # We therefore have an N=NFFT-point data segment split up into K=1 
-        # non- overlapping segments, of length M=NFFT. This means we can 
-        # call welch() on each set of samples from the SDR, accumulate them,
+        # Use scipy.signal.welch to compute one spectrum for each timeseries
+        # of samples from the a call to the SDR.
+        # The scipy.signal.welch() method with noverlap=0 is equivalent to 
+        # Bartlett's method, which estimates the spectral content of a time-
+        # series by splitting our num_samp array into K segments of length
+        # nperseg and averaging the K periodograms.
+        # The idea here is to average many calls to welch() across the
+        # requested integration time; this means we can call welch() on each 
+        # set of samples from the SDR, accumulate the binned power estimates,
         # and average later by the number of spectra taken to reduce the 
         # noise while still following Barlett's method, and without keeping 
         # huge arrays of iq samples around in RAM.
-
+        
         # Time integration loop
         for cnt in range(num_loops):
-            iq = sdr.read_samples(NFFT)
+            iq = sdr.read_samples(num_samp)
             
-            freqs, p_xx = welch(iq, fs=rate, nperseg=NFFT, noverlap=0, scaling='density', detrend=False, return_onesided=False)
+            freqs, p_xx = welch(iq, fs=rate, nperseg=nperseg, nfft=nbins, noverlap=0, scaling='spectrum', window=WINDOW, detrend=False, return_onesided=False)
             p_xx_tot += p_xx
         
         end_time = time.time()
         print('Integration ended at {} after {} seconds.'.format(time.strftime('%a, %d %b %Y %H:%M:%S'), end_time-start_time))
         print('{} spectra were measured at {}.'.format(cnt, fc))
-        print('for an effective integration time of {:.2f}s'.format(NFFT * cnt / rate))
+        print('for an effective integration time of {:.2f}s'.format(num_samp * cnt / rate))
 
         # Unfortunately, welch() with return_onesided=False does a sloppy job
         # of returning the arrays in what we'd consider the "right" order,
-        # so we have to swap the first and last halves to avoid artifacts
+        # so we have to swap the first and last halves to avoid an artifact
         # in the plot.
-        half_len = len(freqs)//2
+        half_len = len(freqs) // 2
         # Swap frequencies:
         tmp_first = freqs[:half_len].copy() 
         tmp_last = freqs[half_len:].copy()
@@ -206,7 +220,22 @@ def run_spectrum_int( NFFT, gain, rate, fc, t_int ):
         p_xx_tot[half_len:] = tmp_first
 
         # Compute the average power spectrum based on the number of spectra read
-        p_avg = 10.*np.log10(p_xx_tot / cnt)
+        p_avg = p_xx_tot / cnt
+
+        # Convert to power spectral density
+        # A great resource that helped me understand the difference:
+        # https://community.sw.siemens.com/s/article/what-is-a-power-spectral-density-psd
+        # We could just divide by the bandwidth, but welch() applies a
+        # windowing correction to the spectrum, and does it differently to
+        # power spectra and PSDs. We multiply by the power spectrum correction 
+        # factor to remove it and divide by the PSD correction to apply it 
+        # instead. Then divide by the bandwidth to get the power per unit 
+        # frequency.
+        # See the scipy docs for _spectral_helper().
+        win = get_window(WINDOW, nperseg)
+        p_avg_hz = p_avg * ((win.sum()**2) / (win*win).sum()) / rate
+
+        p_avg_db_hz = 10. * np.log10(p_avg_hz)
 
         # Shift frequency spectra back to the intended range
         freqs = freqs + fc
@@ -223,10 +252,10 @@ def run_spectrum_int( NFFT, gain, rate, fc, t_int ):
     finally:
         sdr.close()
 
-    return freqs, p_avg
+    return freqs, p_avg_db_hz
 
 
-def run_fswitch_int( NFFT, gain, rate, fc, fthrow, t_int, fswitch=10):
+def run_fswitch_int( num_samp, gain, rate, fc, fthrow, t_int, fswitch=10):
     '''
     Note: Because a significant time penalty is introduced for each retuning,
           a maximum frequency switching rate of 10 Hz is adopted to help 
@@ -236,7 +265,7 @@ def run_fswitch_int( NFFT, gain, rate, fc, fthrow, t_int, fswitch=10):
           to ensure the user gets at least one spectrum taken on each
           frequency of interest.
     Inputs:
-    NFFT:     Number of elements to sample from the SDR IQ timeseries: powers of 2 are most efficient
+    num_samp:     Number of elements to sample from the SDR IQ timeseries: powers of 2 are most efficient
     gain:     Requested SDR gain (dB)
     rate:     SDR sample rate, intrinsically tied to bandwidth in SDRs (Hz)
     fc:       Base center frequency (Hz)
@@ -268,7 +297,7 @@ def run_fswitch_int( NFFT, gain, rate, fc, fthrow, t_int, fswitch=10):
         print('  sample rate: %0.6f MHz' % (sdr.rs/1e6))
         print('  center frequency %0.6f MHz' % (sdr.fc/1e6))
         print('  gain: %d dB' % sdr.gain)
-        print('  num samples per call: {}'.format(NFFT))
+        print('  num samples per call: {}'.format(num_samp))
         print('  requested integration time: {}s'.format(t_int))
         
         # Total number of samples to collect
@@ -276,20 +305,20 @@ def run_fswitch_int( NFFT, gain, rate, fc, fthrow, t_int, fswitch=10):
         # Number of samples on each frequency dwell
         N_dwell = int(sdr.rs * (1.0 / fswitch))
         # Number of calls to SDR on each frequency
-        num_loops = N_dwell//NFFT
+        num_loops = N_dwell//num_samp
         # Number of dwells on each frequency
         num_dwells = N//N_dwell
         print('  => num samples to collect: {}'.format(N))
-        print('  => est. num of calls: {}'.format(N//NFFT))
+        print('  => est. num of calls: {}'.format(N//num_samp))
         print('  => num samples on each dwell: {}'.format(N_dwell))
         print('  => est. num of calls on each dwell: {}'.format(num_loops))
         print('  => num dwells total: {}'.format(num_dwells))
 
         # Set up arrays to store power spectrum calculated from I-Q samples
-        freqs_on = np.zeros(NFFT)
-        freqs_off = np.zeros(NFFT)
-        p_xx_on = np.zeros(NFFT)
-        p_xx_off = np.zeros(NFFT)
+        freqs_on = np.zeros(num_samp)
+        freqs_off = np.zeros(num_samp)
+        p_xx_on = np.zeros(num_samp)
+        p_xx_off = np.zeros(num_samp)
         cnt = 0
 
         # Set the baseline time
@@ -305,20 +334,20 @@ def run_fswitch_int( NFFT, gain, rate, fc, fthrow, t_int, fswitch=10):
             else:
                 sdr.fc = fthrow
             for j in range(num_loops):
-                iq = sdr.read_samples(NFFT)
+                iq = sdr.read_samples(num_samp)
 
                 if tick:
-                    freqs_on, p_xx = welch(iq, fs=rate, nperseg=NFFT, noverlap=0, scaling='spectrum', detrend=False, return_onesided=False)
+                    freqs_on, p_xx = welch(iq, fs=rate, nperseg=num_samp, noverlap=0, scaling='spectrum', detrend=False, return_onesided=False)
                     p_xx_on += p_xx
                 else:
-                    freqs_off, p_xx = welch(iq, fs=rate, nperseg=NFFT, noverlap=0, scaling='spectrum', detrend=False, return_onesided=False)
+                    freqs_off, p_xx = welch(iq, fs=rate, nperseg=num_samp, noverlap=0, scaling='spectrum', detrend=False, return_onesided=False)
                     p_xx_off += p_xx
                 cnt += 1
         
         end_time = time.time()
         print('Integration ended at {} after {} seconds.'.format(time.strftime('%a, %d %b %Y %H:%M:%S'), end_time-start_time))
         print('{} spectra were measured, split between {} and {}.'.format(cnt, fc, fthrow))
-        print('for an effective integration time of {:.2f}s'.format(NFFT * cnt / rate))
+        print('for an effective integration time of {:.2f}s'.format(num_samp * cnt / rate))
 
         half_len = len(freqs_on)//2
         # Swap frequencies:

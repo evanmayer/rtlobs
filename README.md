@@ -7,15 +7,16 @@ Turn your RTL-SDR dongle into a radio astronomy workhorse. Perform functions suc
 ```python
 from rtlobs import collect as col
 from rtlobs import post_process as post
-# 1024-bin resolution power spectrum 
+# 8192 samples per call to the SDR
+# 2048 bin resolution power spectrum 
 # 49.6 dB of RtlSdr gain
 # 2.32 MHz sample rate/bandwidth
 # 1.420 GHz center frequency
 # 10 sec integration time
-f, p = col.run_spectrum_int(1024, 49.6, 2.32e6, 1.420e9, 10)
+f, p = col.run_spectrum_int(8192, 2048, 49.6, 2.32e6, 1.420e9, 10)
 # Show the figure containing the plotted spectrum
 fig, ax = post.plot_spectrum(f, p, savefig='../images/spectrum_int.png')
-f.show()
+fig.show()
 ```
 ![Time-averaged power spectral density estimate](https://github.com/evanmayer/rtl-obs/blob/master/images/spectrum_int.png)
 
