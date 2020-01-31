@@ -86,12 +86,10 @@ def run_total_power_int(num_samp, gain, rate, fc, t_int):
         # Time integration loop
         @helpers.limit_calls(N / num_samp)
         def p_tot_callback(iq, context):
-            # The below is a total power measurement equivalent to
-            # P = V^2 / R = (sqrt(I^2 + Q^2))^2 = (I^2 + Q^2) / 50,
-            # setting R=50 somewhat arbitrarily since it cancels out when using
-            # these in a calibration.
+            # The below is a total power measurement equivalent to summing
+            # P = V^2 / R = (sqrt(I^2 + Q^2))^2 = (I^2 + Q^2)
             global p_tot 
-            p_tot += np.sum(np.real(iq * np.conj(iq)) / 50.)
+            p_tot += np.sum(np.real(iq * np.conj(iq)))
             global cnt 
             cnt += 1
         sdr.read_samples_async(p_tot_callback, num_samples=num_samp)
@@ -100,11 +98,11 @@ def run_total_power_int(num_samp, gain, rate, fc, t_int):
         print('Integration ended at {} after {} seconds.'.format(time.strftime('%a, %d %b %Y %H:%M:%S'), end_time-start_time))
         print('{} calls were made to SDR.'.format(cnt))
         print('{} samples were measured at {} MHz'.format(cnt * num_samp, fc / 1e6))
-        print('for an effective integration time of {:.2f}s'.format(num_samp * cnt / rate))
+        print('for an effective integration time of {:.2f}s'.format( (num_samp * cnt) / rate))
 
         # Compute the average power value based on the number of measurements 
         # we actually did
-        p_avg = p_tot / num_samp / cnt
+        p_avg = p_tot / (num_samp * cnt)
 
         # nice and tidy
         sdr.close()
