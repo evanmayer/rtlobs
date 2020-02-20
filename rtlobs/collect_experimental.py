@@ -74,20 +74,6 @@ def run_gpu_spectrum_int( num_samp, nbins, gain, rate, fc, t_int ):
         # Set the baseline time
         start_time = time.time()
         print('Integration began at {}'.format(time.strftime('%a, %d %b %Y %H:%M:%S', time.localtime(start_time))))
-        # Estimate the power spectrum by Bartlett's method.
-        # Following https://en.wikipedia.org/wiki/Bartlett%27s_method: 
-        # Use scipy.signal.welch to compute one spectrum for each timeseries
-        # of samples from a call to the SDR.
-        # The scipy.signal.welch() method with noverlap=0 is equivalent to 
-        # Bartlett's method, which estimates the spectral content of a time-
-        # series by splitting our num_samp array into K segments of length
-        # nperseg and averaging the K periodograms.
-        # The idea here is to average many calls to welch() across the
-        # requested integration time; this means we can call welch() on each 
-        # set of samples from the SDR, accumulate the binned power estimates,
-        # and average later by the number of spectra taken to reduce the 
-        # noise while still following Barlett's method, and without keeping 
-        # huge arrays of iq samples around in RAM.
         
         # Time integration loop
         for cnt in range(num_loops):
@@ -101,11 +87,7 @@ def run_gpu_spectrum_int( num_samp, nbins, gain, rate, fc, t_int ):
         print('Integration ended at {} after {} seconds.'.format(time.strftime('%a, %d %b %Y %H:%M:%S'), end_time-start_time))
         print('{} spectra were measured at {}.'.format(cnt, fc))
         print('for an effective integration time of {:.2f}s'.format(num_samp * cnt / rate))
-
-        # Unfortunately, welch() with return_onesided=False does a sloppy job
-        # of returning the arrays in what we'd consider the "right" order,
-        # so we have to swap the first and last halves to avoid an artifact
-        # in the plot.
+        
         half_len = len(freqs) // 2
         # Swap frequencies:
         tmp_first = freqs[:half_len].copy() 
@@ -123,14 +105,6 @@ def run_gpu_spectrum_int( num_samp, nbins, gain, rate, fc, t_int ):
         p_avg = p_xx_tot / cnt
 
         # Convert to power spectral density
-        # A great resource that helped me understand the difference:
-        # https://community.sw.siemens.com/s/article/what-is-a-power-spectral-density-psd
-        # We could just divide by the bandwidth, but welch() applies a
-        # windowing correction to the spectrum, and does it differently to
-        # power spectra and PSDs. We multiply by the power spectrum correction 
-        # factor to remove it and divide by the PSD correction to apply it 
-        # instead. Then divide by the bandwidth to get the power per unit 
-        # frequency.
         # See the scipy docs for _spectral_helper().
         win = get_window(WINDOW, nperseg)
         p_avg_hz = p_avg * ((win.sum()**2) / (win*win).sum()) / rate
