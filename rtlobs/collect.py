@@ -12,25 +12,6 @@ import time
 from rtlsdr import RtlSdr
 
 
-def meas_brightness_temp(num_samp, gain, rate, fc, t_int, T_sys):
-    '''
-    Implement a total-power radiometer. Raw, uncalibrated power values.
-
-    Inputs:
-    num_samp: Number of elements to sample from the SDR IQ timeseries.
-              Greater numbers are more efficient, until limited by device RAM.
-    gain:     Requested SDR gain (dB)
-    rate:     SDR sample rate, intrinsically tied to bandwidth in SDRs (Hz)
-    fc:       Base center frequency (Hz)
-    t_int:    Total integration time (s)
-    T_sys:    System temperature value, used to convert from raw power meas
-              to brightness temp
-
-    Returns:
-    T_tot:   Time-averaged brightness temperature in Kelvin
-    '''
-
-
 def run_total_power_int(num_samp, gain, rate, fc, t_int):
     '''
     Implement a total-power radiometer. Raw, uncalibrated power values.
@@ -253,7 +234,7 @@ def run_spectrum_int( num_samp, nbins, gain, rate, fc, t_int ):
     return freqs, p_avg_db_hz
 
 
-def run_fswitch_int( num_samp, gain, rate, fc, fthrow, t_int, fswitch=10):
+def run_fswitch_int( num_samp, nbins, gain, rate, fc, fthrow, t_int, fswitch=10):
     '''
     Note: Because a significant time penalty is introduced for each retuning,
           a maximum frequency switching rate of 10 Hz is adopted to help 
@@ -263,7 +244,9 @@ def run_fswitch_int( num_samp, gain, rate, fc, fthrow, t_int, fswitch=10):
           to ensure the user gets at least one spectrum taken on each
           frequency of interest.
     Inputs:
-    num_samp:     Number of elements to sample from the SDR IQ timeseries: powers of 2 are most efficient
+    num_samp: Number of elements to sample from the SDR IQ timeseries: powers of 2 are most efficient
+    nbins:    Number of frequency bins in the resulting power spectrum; powers
+              of 2 are most efficient, and smaller numbers are faster on CPU.
     gain:     Requested SDR gain (dB)
     rate:     SDR sample rate, intrinsically tied to bandwidth in SDRs (Hz)
     fc:       Base center frequency (Hz)
@@ -313,10 +296,11 @@ def run_fswitch_int( num_samp, gain, rate, fc, fthrow, t_int, fswitch=10):
         print('  => num dwells total: {}'.format(num_dwells))
 
         # Set up arrays to store power spectrum calculated from I-Q samples
-        freqs_on = np.zeros(num_samp)
-        freqs_off = np.zeros(num_samp)
-        p_xx_on = np.zeros(num_samp)
-        p_xx_off = np.zeros(num_samp)
+        
+        freqs_on = np.zeros(nbins)
+        freqs_off = np.zeros(nbins)
+        p_xx_on = np.zeros(nbins)
+        p_xx_off = np.zeros(nbins)
         cnt = 0
 
         # Set the baseline time
@@ -335,10 +319,10 @@ def run_fswitch_int( num_samp, gain, rate, fc, fthrow, t_int, fswitch=10):
                 iq = sdr.read_samples(num_samp)
 
                 if tick:
-                    freqs_on, p_xx = welch(iq, fs=rate, nperseg=num_samp, noverlap=0, scaling='spectrum', detrend=False, return_onesided=False)
+                    freqs_on, p_xx = welch(iq, fs=rate, nperseg=nbins, noverlap=0, scaling='spectrum', detrend=False, return_onesided=False)
                     p_xx_on += p_xx
                 else:
-                    freqs_off, p_xx = welch(iq, fs=rate, nperseg=num_samp, noverlap=0, scaling='spectrum', detrend=False, return_onesided=False)
+                    freqs_off, p_xx = welch(iq, fs=rate, nperseg=nbins, noverlap=0, scaling='spectrum', detrend=False, return_onesided=False)
                     p_xx_off += p_xx
                 cnt += 1
         
