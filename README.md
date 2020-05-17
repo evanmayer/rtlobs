@@ -81,7 +81,7 @@ Several aspects of this code assume the presence of outside hardware:
 
 ## Known issues:
 - This is a work in progress. Not all features are implemented yet.
-- This library has not been verified against a coherent noise source with a known power, and has not been tested for agreement with standalone utilities such as rtl-power when calculating total power or power spectral density estimates.
+- This library has not been verified against a noise source with a known power, and has not been tested for agreement with standalone utilities such as rtl-power when calculating total power or power spectral density estimates.
 - Because making spectra with Python is slightly slower than the equivalent compiled C/C++ code (see rtl-power or rtl-power-fftw) when you ask for a 100 sec integration, it will take slightly longer than 100 seconds, but your effective integration time will be what you asked for.
 - I write a lot of comments, which you might not want to read.
 
