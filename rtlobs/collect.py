@@ -324,27 +324,11 @@ def run_fswitch_int( num_samp, nbins, gain, rate, fc, fthrow, t_int, fswitch=10)
         print('for an effective integration time of {:.2f}s'.format(num_samp * cnt / rate))
 
         half_len = len(freqs_on)//2
-        # Swap frequencies:
-        tmp_first = freqs_on[:half_len].copy() 
-        tmp_last = freqs_on[half_len:].copy()
-        freqs_on[:half_len] = tmp_last
-        freqs_on[half_len:] = tmp_first
+        freqs_on = np.fft.fftshift(freqs_on)
+        freqs_off = np.fft.fftshift(freqs_off)
 
-        tmp_first = freqs_off[:half_len].copy() 
-        tmp_last = freqs_off[half_len:].copy()
-        freqs_off[:half_len] = tmp_last
-        freqs_off[half_len:] = tmp_first
-
-        # Swap powers:
-        tmp_first = p_xx_on[:half_len].copy()
-        tmp_last = p_xx_on[half_len:].copy()
-        p_xx_on[:half_len] = tmp_last
-        p_xx_on[half_len:] = tmp_first
-
-        tmp_first = p_xx_off[:half_len].copy()
-        tmp_last = p_xx_off[half_len:].copy()
-        p_xx_off[:half_len] = tmp_last
-        p_xx_off[half_len:] = tmp_first
+        p_xx_on = np.fft.fftshift(p_xx_on)
+        p_xx_off = np.fft.fftshift(p_xx_off)
 
         # Compute the average power spectrum based on the number of spectra read
         p_avg_on  = p_xx_on  / cnt
