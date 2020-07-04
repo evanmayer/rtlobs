@@ -186,17 +186,9 @@ def run_spectrum_int( num_samp, nbins, gain, rate, fc, t_int ):
         # so we have to swap the first and last halves to avoid an artifact
         # in the plot.
         half_len = len(freqs) // 2
-        # Swap frequencies:
-        tmp_first = freqs[:half_len].copy() 
-        tmp_last = freqs[half_len:].copy()
-        freqs[:half_len] = tmp_last
-        freqs[half_len:] = tmp_first
 
-        # Swap powers:
-        tmp_first = p_xx_tot[:half_len].copy()
-        tmp_last = p_xx_tot[half_len:].copy()
-        p_xx_tot[:half_len] = tmp_last
-        p_xx_tot[half_len:] = tmp_first
+        freqs = np.fft.fftshift(freqs)
+        p_xx_tot = np.fft.fftshift(p_xx_tot)
 
         # Compute the average power spectrum based on the number of spectra read
         p_avg = p_xx_tot / cnt

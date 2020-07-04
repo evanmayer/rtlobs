@@ -47,7 +47,7 @@ def run_gpu_spectrum_int( num_samp, nbins, gain, rate, fc, t_int ):
         nperseg = 256
 
     print('Initializing rtl-sdr with pyrtlsdr:')
-    sdr = RtlSdr()
+    sdr = RtlSdr(device_index=0)
 
     try:
         sdr.rs = rate # Rate of Sampling (intrinsically tied to bandwidth with SDR dongles)
@@ -89,17 +89,9 @@ def run_gpu_spectrum_int( num_samp, nbins, gain, rate, fc, t_int ):
         print('for an effective integration time of {:.2f}s'.format(num_samp * cnt / rate))
         
         half_len = len(freqs) // 2
-        # Swap frequencies:
-        tmp_first = freqs[:half_len].copy() 
-        tmp_last = freqs[half_len:].copy()
-        freqs[:half_len] = tmp_last
-        freqs[half_len:] = tmp_first
 
-        # Swap powers:
-        tmp_first = p_xx_tot[:half_len].copy()
-        tmp_last = p_xx_tot[half_len:].copy()
-        p_xx_tot[:half_len] = tmp_last
-        p_xx_tot[half_len:] = tmp_first
+        freqs = np.fft.fftshift(freqs)
+        p_xx_tot = np.fft.fftshift(p_xx_tot)
 
         # Compute the average power spectrum based on the number of spectra read
         p_avg = p_xx_tot / cnt
