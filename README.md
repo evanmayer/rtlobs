@@ -1,7 +1,7 @@
 # rtlobs:
 The RTL-SDR Radio Observatory.
 
-Turn your RTL-SDR dongle into a radio astronomy workhorse. Perform functions such as total power integration, taking spectra to observe the 21cm hydrogen line, and performing spectral observations in frequency-switched mode to eliminate baseline shape and increase signal-to-noise.
+Turn your RTL-SDR dongle into a radio astronomy workhorse. Perform functions such as total power integration, taking spectra to observe the 21cm hydrogen line, and performing spectral observations in frequency-switched mode to flatten bandpass shape and increase signal-to-noise.
 
 ### A quick example:
 ```python

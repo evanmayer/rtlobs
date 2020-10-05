@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 def plot_spectrum(freqs, powers, savefig=None):
     '''
     Plots an iterable of frequencies on the x axis against
-    an iterable of frequencies on the y axis.
+    an iterable of powers on the y axis.
                                                                                
     Inputs:
     freqs:    Array of frequencies (assumed Hz). Index-aligned to array of 
