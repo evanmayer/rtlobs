@@ -70,30 +70,3 @@ def noise_src(noise_ctrl, state):
         assert 0 == noise_ctrl.value, '{} did not return LOW, noise source not switched off.'.format(noise_ctrl.pin)
 
     return
-
-def jetson_noise_src(noise_ctrl_pin, state):
-    '''
-    Turn a noise source on the NVIDIA Jetson device on or off.
-    You should configure the method of switching for your own device here.
-
-    Inputs:
-    noise_ctrl_pin: Jetson.GPIO channel number
-    state (int): nonzero = on, zero = off
-    Returns:
-    None
-    '''
-    import Jetson.GPIO as GPIO
-
-    GPIO.setMode(GPIO.BOARD)
-
-    if state != 0:
-        state = 1
-        print('Enabling noise source.')
-        GPIO.output(noise_ctrl_pin, state)
-        assert 1 == GPIO.input(noise_ctrl_pin), '{} did not return HIGH, noise source not switched on.'.format(noise_ctrl.pin)
-    else:
-        print('Disabling noise source.')
-        noise_ctrl.off()
-        assert 0 == GPIO.input(noise_ctrl_pin), '{} did not return LOW, noise source not switched off.'.format(noise_ctrl.pin)
-
-    return
