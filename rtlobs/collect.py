@@ -16,17 +16,25 @@ def run_total_power_int(num_samp, gain, rate, fc, t_int):
     '''
     Implement a total-power radiometer. Raw, uncalibrated power values.
 
-    Inputs:
-    num_samp:   Number of elements to sample from the SDR IQ timeseries per call
-    gain:       Requested SDR gain (dB)
-    rate:       SDR sample rate, intrinsically tied to bandwidth in SDRs (Hz)
-    fc:         Bandpass center frequency (Hz)
-    t_int:      Total integration time (s)
+    Parameters
+    ----------
+    num_samp
+        Number of elements to sample from the SDR IQ timeseries per call
+    gain
+        Requested SDR gain (dB)
+    rate
+        SDR sample rate, intrinsically tied to bandwidth in SDRs (Hz)
+    fc
+        Bandpass center frequency (Hz)
+    t_int
+        Total integration time (s)
 
-    Returns:
-    p_tot:   Time-averaged power in the signal from the sdr, in 
-             uncalibrated units
+    Returns
+    -------
+    p_tot
+        Time-averaged power in the signal from the sdr, in uncalibrated units
     '''
+
     import rtlsdr.helpers as helpers
 
     # Start the RtlSdr instance
@@ -102,20 +110,28 @@ def run_total_power_int(num_samp, gain, rate, fc, t_int):
 
 def run_spectrum_int( num_samp, nbins, gain, rate, fc, t_int ):
     '''
-    Inputs:
-    num_samp: Number of elements to sample from the SDR IQ per call;
-              use powers of 2
-    nbins:    Number of frequency bins in the resulting power spectrum; powers
-              of 2 are most efficient, and smaller numbers are faster on CPU.
-    gain:     Requested SDR gain (dB)
-    rate:     SDR sample rate, intrinsically tied to bandwidth in SDRs (Hz)
-    fc:       Base center frequency (Hz)
-    t_int:    Total effective integration time (s)
+    Parameters
+    ----------
+    num_samp
+        Number of elements to sample from the SDR IQ per call; use powers of 2
+    nbins
+        Number of frequency bins in the resulting power spectrum; powers of 2
+        are most efficient, and smaller numbers are faster on CPU.
+    gain
+        Requested SDR gain (dB)
+    rate
+        SDR sample rate, intrinsically tied to bandwidth in SDRs (Hz)
+    fc
+        Base center frequency (Hz)
+    t_int
+        Total effective integration time (s)
 
-    Returns:
-    freqs:       Frequencies of the resulting spectrum, centered at fc (Hz), 
-                 numpy array
-    p_avg_db_hz: Power spectral density (dB/Hz) numpy array
+    Returns
+    -------
+    freqs
+        Frequencies of the resulting spectrum, centered at fc (Hz), numpy array
+    p_avg_db_hz
+        Power spectral density (dB/Hz) numpy array
     '''
     # Force a choice of window to allow converting to PSD after averaging
     # power spectra
@@ -172,20 +188,12 @@ def run_spectrum_int( num_samp, nbins, gain, rate, fc, t_int ):
         # Time integration loop
         for cnt in range(num_loops):
             iq = sdr.read_samples(num_samp)
-            
             freqs, p_xx = welch(iq, fs=rate, nperseg=nperseg, nfft=nbins, noverlap=0, scaling='spectrum', window=WINDOW, detrend=False, return_onesided=False)
             p_xx_tot += p_xx
-        
         end_time = time.time()
         print('Integration ended at {} after {} seconds.'.format(time.strftime('%a, %d %b %Y %H:%M:%S'), end_time-start_time))
         print('{} spectra were measured at {}.'.format(cnt, fc))
         print('for an effective integration time of {:.2f}s'.format(num_samp * cnt / rate))
-
-        # Unfortunately, welch() with return_onesided=False does a sloppy job
-        # of returning the arrays in what we'd consider the "right" order,
-        # so we have to swap the first and last halves to avoid an artifact
-        # in the plot.
-        half_len = len(freqs) // 2
 
         freqs = np.fft.fftshift(freqs)
         p_xx_tot = np.fft.fftshift(p_xx_tot)
@@ -235,24 +243,39 @@ def run_fswitch_int( num_samp, nbins, gain, rate, fc, fthrow, t_int, fswitch=10)
           As a consequence, the minimum integration time is 2*(1/fswitch)
           to ensure the user gets at least one spectrum taken on each
           frequency of interest.
-    Inputs:
-    num_samp: Number of elements to sample from the SDR IQ timeseries: powers of 2 are most efficient
-    nbins:    Number of frequency bins in the resulting power spectrum; powers
-              of 2 are most efficient, and smaller numbers are faster on CPU.
-    gain:     Requested SDR gain (dB)
-    rate:     SDR sample rate, intrinsically tied to bandwidth in SDRs (Hz)
-    fc:       Base center frequency (Hz)
-    fthrow:   Alternate frequency (Hz)
-    t_int:    Total effective integration time (s)
-    Kwargs:
-    fswitch:  Frequency of switching between fc and fthrow (Hz)
+    
+    Parameters
+    ----------
+    num_samp
+        Number of elements to sample from the SDR IQ timeseries: powers of 2
+        are most efficient
+    nbins
+        Number of frequency bins in the resulting power spectrum; powers of 2
+        are most efficient, and smaller numbers are faster on CPU.
+    gain
+        Requested SDR gain (dB)
+    rate
+        SDR sample rate, intrinsically tied to bandwidth in SDRs (Hz)
+    fc
+        Base center frequency (Hz)
+    fthrow
+        Alternate frequency (Hz)
+    t_int
+        Total effective integration time (s)
+    fswitch (optiona)
+         Frequency of switching between fc and fthrow (Hz)
 
-    Returns:
-    freqs_fold: Frequencies of the spectrum resulting from folding according to the folding method implemented in the f_throw_fold (post_process module)
-    p_fold:     Folded frequency-switched power, centered at fc,(uncalibrated V^2) numpy array.
+    Returns
+    -------
+    freqs_fold
+        Frequencies of the spectrum resulting from folding according to the
+        folding method implemented in the f_throw_fold (post_process module)
+    p_fold
+        Folded frequency-switched power, centered at fc,(uncalibrated V^2)
+        numpy array.
     '''
+
     from .post_process import f_throw_fold 
-    import rtlsdr.helpers as helpers
 
     # Check inputs:
     assert t_int >= 2.0 * (1.0/fswitch), '''At t_int={} s, frequency switching at fswitch={} Hz means the switching period is longer than integration time. Please choose a longer integration time or shorter switching frequency to ensure enough integration time to dwell on each frequency.'''.format(t_int, fswitch)
@@ -288,7 +311,6 @@ def run_fswitch_int( num_samp, nbins, gain, rate, fc, fthrow, t_int, fswitch=10)
         print('  => num dwells total: {}'.format(num_dwells))
 
         # Set up arrays to store power spectrum calculated from I-Q samples
-        
         freqs_on = np.zeros(nbins)
         freqs_off = np.zeros(nbins)
         p_xx_on = np.zeros(nbins)
@@ -311,10 +333,26 @@ def run_fswitch_int( num_samp, nbins, gain, rate, fc, fthrow, t_int, fswitch=10)
                 iq = sdr.read_samples(num_samp)
 
                 if tick:
-                    freqs_on, p_xx = welch(iq, fs=rate, nperseg=nbins, noverlap=0, scaling='spectrum', detrend=False, return_onesided=False)
+                    freqs_on, p_xx = welch(
+                        iq,
+                        fs=rate,
+                        nperseg=nbins,
+                        noverlap=0,
+                        scaling='spectrum',
+                        detrend=False,
+                        return_onesided=False
+                    )
                     p_xx_on += p_xx
                 else:
-                    freqs_off, p_xx = welch(iq, fs=rate, nperseg=nbins, noverlap=0, scaling='spectrum', detrend=False, return_onesided=False)
+                    freqs_off, p_xx = welch(
+                        iq,
+                        fs=rate,
+                        nperseg=nbins,
+                        noverlap=0,
+                        scaling='spectrum',
+                        detrend=False,
+                        return_onesided=False
+                    )
                     p_xx_off += p_xx
                 cnt += 1
         
@@ -323,7 +361,6 @@ def run_fswitch_int( num_samp, nbins, gain, rate, fc, fthrow, t_int, fswitch=10)
         print('{} spectra were measured, split between {} and {}.'.format(cnt, fc, fthrow))
         print('for an effective integration time of {:.2f}s'.format(num_samp * cnt / rate))
 
-        half_len = len(freqs_on)//2
         freqs_on = np.fft.fftshift(freqs_on)
         freqs_off = np.fft.fftshift(freqs_off)
 

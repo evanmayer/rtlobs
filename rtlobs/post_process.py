@@ -13,18 +13,21 @@ def plot_spectrum(freqs, powers, savefig=None):
     Plots an iterable of frequencies on the x axis against
     an iterable of powers on the y axis.
                                                                                
-    Inputs:
-    freqs:    Array of frequencies (assumed Hz). Index-aligned to array of 
-              powers
-    powers:   Array of power spectral density estimates (assumed dB/Hz 
-              uncalibrated)
-    
-    kwargs:
-    savefig:  Optional filename. If provided, will save plot.
+    Parameters
+    ----------
+    freqs
+        Array of frequencies (assumed Hz). Index-aligned to array of powers
+    powers
+        Array of power spectral density estimates (assumed dB/Hz uncalibrated)
+    savefig (optional)
+        Filename, if provided, will save a plot there
 
-    Returns:
-    fig:      matplotlib figure handle to the generated plot
-    ax:       in case you want to add more traces
+    Returns
+    -------
+    fig
+        matplotlib figure handle to the generated plot
+    ax
+        in case you want to add more traces later
     '''
 
     fig = plt.figure()
@@ -60,21 +63,27 @@ def f_throw_fold(freqs_on, freqs_off, p_on, p_off):
     Which was in turn taken from:
     https://aas.aanda.org/articles/aas/abs/1997/10/ds1263/ds1263.html
 
-    Inputs:
-    freqs_on:   Array of frequencies in power spectrum, taken at the target 
-                frequency
-    freqs_off:  Array of frequencies in power spectrum, taken shifted off of
-                the target frequency. For "in-band" switching mode, this
-                should still contain the spectral line of interest.
+    Parameters
+    ----------
+    freqs_on
+        Array of frequencies in power spectrum, taken at the target frequency
+    freqs_off
+        Array of frequencies in power spectrum, taken shifted off of the target
+        frequency. For "in-band" switching mode, this should still contain the
+        spectral line of interest.
+    p_on
+        Array, a power spectrum estimate (assumed uncalibrated V^2), taken at
+        the target frequency
+    p_off
+        Array, a power spectrum estimate (assumed uncalibrated V^2), taken
+        shifted off of the target frequency.
 
-    p_on:       Array, a power spectrum estimate (assumed uncalibrated 
-                V^2), taken at the target frequency
-    p_off:      Array, a power spectrum estimate (assumed uncalibrated
-                V^2), taken shifted off of the target frequency.
-
-    Returns:
-    freqs_fold: Array of frequencies at which the two switched spectra overlap
-    p_fold:     Folded power spectrum in uncalibrated power units
+    Returns
+    -------
+    freqs_fold
+        Array of frequencies at which the two switched spectra overlap
+    p_fold
+        Folded power spectrum in uncalibrated power units
     '''
 
     # Shift-and-add to fold

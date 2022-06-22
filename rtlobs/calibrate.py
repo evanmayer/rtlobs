@@ -8,15 +8,22 @@ Library for calibration functions on an rtl-sdr based radio telescope.
 def y_factor_cal(p_hot, p_cold, t_hot, t_cold):
     '''
     Perform Y-factor calibration
-                                                                               
-    Inputs:
-    p_hot:  Raw total power measurement taken from hot load
-    p_cold: Raw total power measurement taken from cold load
-    t_hot:  Temperature of the hot load in Kelvin
-    t_cold: Temperature of the cold load in Kelvin
-                                                                               
-    Returns:
-    t_sys:  System temperature estimate, K
+
+    Parameters
+    ----------
+    p_hot
+        Raw total power measurement taken from hot load
+    p_cold
+        Raw total power measurement taken from cold load
+    t_hot
+        Temperature of the hot load in Kelvin
+    t_cold
+        Temperature of the cold load in Kelvin
+
+    Returns
+    -------
+    t_sys
+        System temperature estimate, K
     '''
 
     # Ref: K. O'Neil, Single-Dish Calibration Techniques at Radio Wavelengths
