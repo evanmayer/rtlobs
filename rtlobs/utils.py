@@ -15,11 +15,11 @@ def biast(state: int, index=0, gpio=0):
 
     Parameters
     ----------
-    state (int)
+    state : int
         nonzero = on, zero = off
-    index (int)(optional)
+    index : int (optional)
         RTL-SDR device index, in the event of more than one SDR
-    gpio (int)(optional)
+    gpio : int (optional)
         The rtl_biast utility allows access to RTL2832U GPIO outputs. The
         RTL-SDRblog v3 dongle has these broken out on the board:
         5: RTL-SDRblog breakout header 30
@@ -38,12 +38,12 @@ def biast(state: int, index=0, gpio=0):
     ret = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
     if ret.returncode == 0:
-        print(ret.stdout)
+        print(ret.stdout.decode())
     else:
         if ret.stdout:
-            print(ret.stdout)
+            print(ret.stdout.decode())
         if ret.stderr:
-            print(ret.stderr)
+            print(ret.stderr.decode())
     return
 
 
@@ -54,9 +54,9 @@ def noise_src(noise_ctrl, state):
 
     Inputs
     ------
-    noise_ctrl (gpiozero DigitalOutputDevice)
+    noise_ctrl : gpiozero DigitalOutputDevice
         gpiozero object assigned to the pin controlling the noise source
-    state (int)
+    state : int
         nonzero = on, zero = off
     '''
 

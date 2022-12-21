@@ -4,6 +4,7 @@ by Evan Mayer
 Library for data collection functions on an rtl-sdr based radio telescope.
 '''
 
+import logging
 import numpy as np
 from scipy.signal import welch, get_window
 import sys
@@ -38,18 +39,18 @@ def run_total_power_int(num_samp, gain, rate, fc, t_int):
     import rtlsdr.helpers as helpers
 
     # Start the RtlSdr instance
-    print('Initializing rtl-sdr with pyrtlsdr:')
+    logging.debug('Initializing rtl-sdr with pyrtlsdr')
     sdr = RtlSdr()
 
     try:
         sdr.rs = rate
         sdr.fc = fc
         sdr.gain = gain
-        print('  sample rate: {} MHz'.format(sdr.rs / 1e6))
-        print('  center frequency {} MHz'.format(sdr.fc / 1e6))
-        print('  gain: {} dB'.format(sdr.gain))
-        print('  num samples per call: {}'.format(num_samp))
-        print('  requested integration time: {}s'.format(t_int))
+        logging.debug('  sample rate: {} MHz'.format(sdr.rs / 1e6))
+        logging.debug('  center frequency {} MHz'.format(sdr.fc / 1e6))
+        logging.debug('  gain: {} dB'.format(sdr.gain))
+        logging.debug('  num samples per call: {}'.format(num_samp))
+        logging.debug('  requested integration time: {}s'.format(t_int))
         # For Nyquist sampling of the passband dv over an integration time
         # tau, we must collect N = 2 * dv * tau real samples.
         # https://www.cv.nrao.edu/~sransom/web/A1.html#S3
@@ -60,8 +61,8 @@ def run_total_power_int(num_samp, gain, rate, fc, t_int):
         # Nyquist sampled at a data rate of rs = dv complex samples per second
         # rather than the 2* dv required of real samples.
         N = int(sdr.rs * t_int)
-        print('  => num samples to collect: {}'.format(N))
-        print('  => est. num of calls: {}'.format(int(N / num_samp)))
+        logging.debug('  => num samples to collect: {}'.format(N))
+        logging.debug('  => est. num of calls: {}'.format(int(N / num_samp)))
 
         global p_tot
         global cnt
@@ -70,7 +71,7 @@ def run_total_power_int(num_samp, gain, rate, fc, t_int):
 
         # Set the baseline time
         start_time = time.time()
-        print('Integration began at {}'.format(time.strftime('%a, %d %b %Y %H:%M:%S', time.localtime(start_time))))
+        logging.info('Integration began at {}'.format(time.strftime('%a, %d %b %Y %H:%M:%S', time.localtime(start_time))))
 
         # Time integration loop
         @helpers.limit_calls(N / num_samp)
@@ -84,10 +85,10 @@ def run_total_power_int(num_samp, gain, rate, fc, t_int):
         sdr.read_samples_async(p_tot_callback, num_samples=num_samp)
         
         end_time = time.time()
-        print('Integration ended at {} after {} seconds.'.format(time.strftime('%a, %d %b %Y %H:%M:%S'), end_time-start_time))
-        print('{} calls were made to SDR.'.format(cnt))
-        print('{} samples were measured at {} MHz'.format(cnt * num_samp, fc / 1e6))
-        print('for an effective integration time of {:.2f}s'.format( (num_samp * cnt) / rate))
+        logging.info('Integration ended at {} after {} seconds.'.format(time.strftime('%a, %d %b %Y %H:%M:%S'), end_time-start_time))
+        logging.debug('{} calls were made to SDR.'.format(cnt))
+        logging.debug('{} samples were measured at {} MHz'.format(cnt * num_samp, fc / 1e6))
+        logging.debug('for an effective integration time of {:.2f}s'.format( (num_samp * cnt) / rate))
 
         # Compute the average power value based on the number of measurements 
         # we actually did
@@ -96,9 +97,6 @@ def run_total_power_int(num_samp, gain, rate, fc, t_int):
         # nice and tidy
         sdr.close()
 
-    except OSError as err:
-        print("OS error: {0}".format(err))
-        raise(err)
     except:
         print('Unexpected error:', sys.exc_info()[0])
         raise
@@ -144,23 +142,23 @@ def run_spectrum_int( num_samp, nbins, gain, rate, fc, t_int ):
     else:
         nperseg = 256
 
-    print('Initializing rtl-sdr with pyrtlsdr:')
+    logging.debug('Initializing rtl-sdr with pyrtlsdr')
     sdr = RtlSdr()
 
     try:
         sdr.rs = rate # Rate of Sampling (intrinsically tied to bandwidth with SDR dongles)
         sdr.fc = fc
         sdr.gain = gain
-        print('  sample rate: %0.6f MHz' % (sdr.rs / 1e6))
-        print('  center frequency %0.6f MHz' % (sdr.fc / 1e6))
-        print('  gain: %d dB' % sdr.gain)
-        print('  num samples per call: {}'.format(num_samp))
-        print('  PSD binning: {} bins'.format(nbins))
-        print('  requested integration time: {}s'.format(t_int))
+        logging.debug('  sample rate: %0.6f MHz' % (sdr.rs / 1e6))
+        logging.debug('  center frequency %0.6f MHz' % (sdr.fc / 1e6))
+        logging.debug('  gain: %d dB' % sdr.gain)
+        logging.debug('  num samples per call: {}'.format(num_samp))
+        logging.debug('  PSD binning: {} bins'.format(nbins))
+        logging.debug('  requested integration time: {}s'.format(t_int))
         N = int(sdr.rs * t_int)
         num_loops = int(N / num_samp) + 1
-        print('  => num samples to collect: {}'.format(N))
-        print('  => est. num of calls: {}'.format(num_loops - 1))
+        logging.debug('  => num samples to collect: {}'.format(N))
+        logging.debug('  => est. num of calls: {}'.format(num_loops - 1))
 
         # Set up arrays to store power spectrum calculated from I-Q samples
         freqs = np.zeros(nbins)
@@ -169,7 +167,7 @@ def run_spectrum_int( num_samp, nbins, gain, rate, fc, t_int ):
 
         # Set the baseline time
         start_time = time.time()
-        print('Integration began at {}'.format(time.strftime('%a, %d %b %Y %H:%M:%S', time.localtime(start_time))))
+        logging.info('Integration began at {}'.format(time.strftime('%a, %d %b %Y %H:%M:%S', time.localtime(start_time))))
         # Estimate the power spectrum by Bartlett's method.
         # Following https://en.wikipedia.org/wiki/Bartlett%27s_method: 
         # Use scipy.signal.welch to compute one spectrum for each timeseries
@@ -191,9 +189,9 @@ def run_spectrum_int( num_samp, nbins, gain, rate, fc, t_int ):
             freqs, p_xx = welch(iq, fs=rate, nperseg=nperseg, nfft=nbins, noverlap=0, scaling='spectrum', window=WINDOW, detrend=False, return_onesided=False)
             p_xx_tot += p_xx
         end_time = time.time()
-        print('Integration ended at {} after {} seconds.'.format(time.strftime('%a, %d %b %Y %H:%M:%S'), end_time-start_time))
-        print('{} spectra were measured at {}.'.format(cnt, fc))
-        print('for an effective integration time of {:.2f}s'.format(num_samp * cnt / rate))
+        logging.info('Integration ended at {} after {} seconds.'.format(time.strftime('%a, %d %b %Y %H:%M:%S'), end_time-start_time))
+        logging.debug('{} spectra were measured at {}.'.format(cnt, fc))
+        logging.debug('for an effective integration time of {:.2f}s'.format(num_samp * cnt / rate))
 
         freqs = np.fft.fftshift(freqs)
         p_xx_tot = np.fft.fftshift(p_xx_tot)
@@ -222,9 +220,6 @@ def run_spectrum_int( num_samp, nbins, gain, rate, fc, t_int ):
         # nice and tidy
         sdr.close()
 
-    except OSError as err:
-        print("OS error: {0}".format(err))
-        raise(err)
     except:
         print('Unexpected error:', sys.exc_info()[0])
         raise
@@ -281,20 +276,20 @@ def run_fswitch_int( num_samp, nbins, gain, rate, fc, fthrow, t_int, fswitch=10)
     assert t_int >= 2.0 * (1.0/fswitch), '''At t_int={} s, frequency switching at fswitch={} Hz means the switching period is longer than integration time. Please choose a longer integration time or shorter switching frequency to ensure enough integration time to dwell on each frequency.'''.format(t_int, fswitch)
 
     if fswitch > 10:
-        print('''Warning: high frequency switching values mean more SDR retunings. A greater fraction of observation time will be spent retuning the SDR, resulting in longer wait times to reach the requested effective integration time.''')
+        logging.warning('''Warning: high frequency switching values mean more SDR retunings. A greater fraction of observation time will be spent retuning the SDR, resulting in longer wait times to reach the requested effective integration time.''')
 
-    print('Initializing rtl-sdr with pyrtlsdr:')
+    logging.debug('Initializing rtl-sdr with pyrtlsdr')
     sdr = RtlSdr()
 
     try:
         sdr.rs = rate # Rate of Sampling (intrinsically tied to bandwidth with SDR dongles)
         sdr.fc = fc
         sdr.gain = gain
-        print('  sample rate: %0.6f MHz' % (sdr.rs/1e6))
-        print('  center frequency %0.6f MHz' % (sdr.fc/1e6))
-        print('  gain: %d dB' % sdr.gain)
-        print('  num samples per call: {}'.format(num_samp))
-        print('  requested integration time: {}s'.format(t_int))
+        logging.debug('  sample rate: %0.6f MHz' % (sdr.rs/1e6))
+        logging.debug('  center frequency %0.6f MHz' % (sdr.fc/1e6))
+        logging.debug('  gain: %d dB' % sdr.gain)
+        logging.debug('  num samples per call: {}'.format(num_samp))
+        logging.debug('  requested integration time: {}s'.format(t_int))
         
         # Total number of samples to collect
         N = int(sdr.rs * t_int)
@@ -304,11 +299,11 @@ def run_fswitch_int( num_samp, nbins, gain, rate, fc, fthrow, t_int, fswitch=10)
         num_loops = N_dwell//num_samp
         # Number of dwells on each frequency
         num_dwells = N//N_dwell
-        print('  => num samples to collect: {}'.format(N))
-        print('  => est. num of calls: {}'.format(N//num_samp))
-        print('  => num samples on each dwell: {}'.format(N_dwell))
-        print('  => est. num of calls on each dwell: {}'.format(num_loops))
-        print('  => num dwells total: {}'.format(num_dwells))
+        logging.debug('  => num samples to collect: {}'.format(N))
+        logging.debug('  => est. num of calls: {}'.format(N//num_samp))
+        logging.debug('  => num samples on each dwell: {}'.format(N_dwell))
+        logging.debug('  => est. num of calls on each dwell: {}'.format(num_loops))
+        logging.debug('  => num dwells total: {}'.format(num_dwells))
 
         # Set up arrays to store power spectrum calculated from I-Q samples
         freqs_on = np.zeros(nbins)
@@ -319,7 +314,7 @@ def run_fswitch_int( num_samp, nbins, gain, rate, fc, fthrow, t_int, fswitch=10)
 
         # Set the baseline time
         start_time = time.time()
-        print('Integration began at {}'.format(time.strftime('%a, %d %b %Y %H:%M:%S', time.localtime(start_time))))
+        logging.info('Integration began at {}'.format(time.strftime('%a, %d %b %Y %H:%M:%S', time.localtime(start_time))))
 
         # Swap between the two specified frequencies, integrating signal.
         # Time integration loop
@@ -357,9 +352,9 @@ def run_fswitch_int( num_samp, nbins, gain, rate, fc, fthrow, t_int, fswitch=10)
                 cnt += 1
         
         end_time = time.time()
-        print('Integration ended at {} after {} seconds.'.format(time.strftime('%a, %d %b %Y %H:%M:%S'), end_time-start_time))
-        print('{} spectra were measured, split between {} and {}.'.format(cnt, fc, fthrow))
-        print('for an effective integration time of {:.2f}s'.format(num_samp * cnt / rate))
+        logging.info('Integration ended at {} after {} seconds.'.format(time.strftime('%a, %d %b %Y %H:%M:%S'), end_time-start_time))
+        logging.debug('{} spectra were measured, split between {} and {}.'.format(cnt, fc, fthrow))
+        logging.debug('for an effective integration time of {:.2f}s'.format(num_samp * cnt / rate))
 
         freqs_on = np.fft.fftshift(freqs_on)
         freqs_off = np.fft.fftshift(freqs_off)
@@ -380,9 +375,6 @@ def run_fswitch_int( num_samp, nbins, gain, rate, fc, fthrow, t_int, fswitch=10)
         # nice and tidy
         sdr.close()
 
-    except OSError as err:
-        print("OS error: {0}".format(err))
-        raise(err)
     except:
         print('Unexpected error:', sys.exc_info()[0])
         raise
@@ -398,7 +390,5 @@ def save_spectrum(filename, freqs, p_xx):
     '''
     header='\n\n\n\n\n'
     np.savetxt(filename, np.column_stack((freqs, p_xx)), delimiter=' ', header=header)
-    print('Results were written to {}.'.format(filename))
-
     return
 
