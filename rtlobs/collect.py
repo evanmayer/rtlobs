@@ -78,7 +78,9 @@ def run_total_power_int(num_samp, gain, rate, fc, t_int):
         def p_tot_callback(iq, context):
             # The below is a total power measurement equivalent to summing
             # P = V^2 / R = (sqrt(I^2 + Q^2))^2 = (I^2 + Q^2)
-            global p_tot 
+            global p_tot
+            # compensate for DC spike
+            iq = (iq.real - iq.real.mean()) + (1j * (iq.imag - iq.imag.mean()))
             p_tot += np.sum(np.real(iq * np.conj(iq)))
             global cnt 
             cnt += 1
@@ -186,6 +188,8 @@ def run_spectrum_int( num_samp, nbins, gain, rate, fc, t_int ):
         # Time integration loop
         for cnt in range(num_loops):
             iq = sdr.read_samples(num_samp)
+            # compensate for DC spike
+            iq = (iq.real - iq.real.mean()) + (1j * (iq.imag - iq.imag.mean()))
             freqs, p_xx = welch(iq, fs=rate, nperseg=nperseg, nfft=nbins, noverlap=0, scaling='spectrum', window=WINDOW, detrend=False, return_onesided=False)
             p_xx_tot += p_xx
         end_time = time.time()
@@ -326,6 +330,8 @@ def run_fswitch_int( num_samp, nbins, gain, rate, fc, fthrow, t_int, fswitch=10)
                 sdr.fc = fthrow
             for j in range(num_loops):
                 iq = sdr.read_samples(num_samp)
+                # compensate for DC spike
+                iq = (iq.real - iq.real.mean()) + (1j * (iq.imag - iq.imag.mean()))
 
                 if tick:
                     freqs_on, p_xx = welch(
