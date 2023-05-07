@@ -108,6 +108,122 @@ def run_total_power_int(num_samp, gain, rate, fc, t_int):
     return p_avg
 
 
+def dicke(num_samp, gain, rate, fc, t, plot=False):
+    '''
+    Implement Dicke noise switching using RTL-SDRblog v3 GPIO
+
+    Parameters
+    ----------
+    num_samp
+        Number of elements to sample from the SDR IQ timeseries per call
+    gain
+        Requested SDR gain (dB)
+    rate
+        SDR sample rate, intrinsically tied to bandwidth in SDRs (Hz)
+    fc
+        Bandpass center frequency (Hz)
+    t_int
+        Total time (s)
+
+    Returns
+    -------
+    iq
+        Complex samples from the device
+    '''
+
+    if plot:
+        import matplotlib.pyplot as plt
+        import matplotlib.animation as animation
+        fig, ax = plt.subplots()
+        plt.ion()
+        plt.show()
+        window_size = 300
+        t_window = np.arange(window_size)
+        p_window = np.zeros(window_size)
+        line, = ax.plot(t_window, p_window)
+        fig.canvas.flush_events()
+        fig.canvas.draw()
+
+    # Start the RtlSdr instance
+    logging.debug('Initializing rtl-sdr with pyrtlsdr')
+    sdr = RtlSdr()
+
+    try:
+        sdr.rs = rate
+        sdr.fc = fc
+        sdr.gain = gain
+        logging.debug('  sample rate: {} MHz'.format(sdr.rs / 1e6))
+        logging.debug('  center frequency {} MHz'.format(sdr.fc / 1e6))
+        logging.debug('  gain: {} dB'.format(sdr.gain))
+        logging.debug('  num samples per call: {}'.format(num_samp))
+        logging.debug('  requested integration time: {}s'.format(t))
+        N = int(sdr.rs * t)
+        logging.debug('  => num samples to collect: {}'.format(N))
+        logging.debug('  => est. num of calls: {}'.format(int(N / num_samp)))
+
+        # Set a GPIO pin (RTL-SDRblog v3 header 31) as noise source trigger
+        sdr.set_gpio_output(4)
+
+        ts = []
+        ps = []
+        noise_on = []
+        flipflop = 1
+        for i in range(N // num_samp):
+            curtime = time.time()
+            time_str = time.strftime('%a, %d %b %Y %H:%M:%S', time.localtime(curtime))
+
+            if flipflop:
+                sdr.set_gpio_bit(4, 1)
+            else:
+                sdr.set_gpio_bit(4, 0)
+
+            iq = sdr.read_samples(num_samp)
+            # compensate for DC spike
+            iq = (iq.real - iq.real.mean()) + (1j * (iq.imag - iq.imag.mean()))
+            p_tot = np.sum(np.real(iq * np.conj(iq)))
+            
+            ts.append(curtime)
+            ps.append(p_tot)
+            noise_on.append(flipflop)
+            flipflop = 1 - flipflop
+
+            if plot:
+                if len(ts) < 4:
+                    continue
+                elif len(ts) < window_size:
+                    cur_window = len(ts)
+                else:
+                    cur_window = window_size
+                noise_on_window = noise_on[-cur_window:]
+                t_window = ts[-cur_window:]
+                p_window = ps[-cur_window:]
+                mask_off = np.where(np.array(noise_on_window) < 1)[0]
+                t_interp = [((t_window[i] + t_window[i-1]) / 2) for i in mask_off]
+                p_window_dicke = [((p_window[i] - p_window[i-1])) for i in mask_off]
+
+                line.set_xdata(t_interp[1:])
+                line.set_ydata(p_window_dicke[1:])
+                ax.set_xlim(np.min(t_interp[1:]), np.max(t_interp[1:]))
+                ax.set_ylim(0.9 * np.min(p_window_dicke[1:]), 1.1 * np.max(p_window_dicke[1:]))
+                ax.autoscale_view()
+                fig.canvas.flush_events()
+                fig.canvas.draw()
+
+        np.save(f'./dicke_timeseries_{time_str}.npy', np.array([ts, ps, noise_on]))
+
+        # nice and tidy
+        sdr.set_gpio_bit(4, 0)
+        sdr.close()
+
+    except:
+        print('Unexpected error:', sys.exc_info()[0])
+        raise
+    finally:
+        sdr.close()
+
+    return ts, ps, noise_on
+
+
 def run_spectrum_int( num_samp, nbins, gain, rate, fc, t_int ):
     '''
     Parameters
