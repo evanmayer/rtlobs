@@ -8,7 +8,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-def plot_spectrum(freqs, powers, savefig=None):
+def plot_spectrum(freqs, powers, fig=None, ax=None, savefig=None):
     '''
     Plots an iterable of frequencies on the x axis against
     an iterable of powers on the y axis.
@@ -29,9 +29,9 @@ def plot_spectrum(freqs, powers, savefig=None):
     ax
         in case you want to add more traces later
     '''
+    if (not fig or not ax):
+        fig, ax = plt.subplots()
 
-    fig = plt.figure()
-    ax = fig.subplots(1)
     ax.plot(freqs, powers)
     ax.grid()
     plt.locator_params(axis='x', nbins=9)

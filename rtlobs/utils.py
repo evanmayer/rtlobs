@@ -30,9 +30,9 @@ def biast(state: int, index=0, gpio=0):
 
     if state != 0:
         state = 1
-        print('Enabling bias tee.')
+        print(f'Enabling GPIO {gpio}')
     else:
-        print('Disabling bias tee.')
+        print(f'Disabling GPIO {gpio}.')
 
     cmd = 'rtl_biast -d {} -b {} -g {}'.format(index, state, gpio).split()
     ret = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
