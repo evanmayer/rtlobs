@@ -11,9 +11,23 @@ import sys
 import time
 
 from rtlsdr import RtlSdr
+import rtlsdr.helpers as helpers
 
 
-def run_total_power_int(num_samp, gain, rate, fc, t_int):
+def get_sdr(rate=2.32e6, fc=1.4204e9, gain=35.0):
+    # Start the RtlSdr instance
+    logging.debug('Initializing rtl-sdr with pyrtlsdr')
+    sdr = RtlSdr()
+    sdr.rs = rate
+    sdr.fc = fc
+    sdr.gain = gain
+    logging.debug('sample rate: {} MHz'.format(sdr.rs / 1e6))
+    logging.debug('center frequency {} MHz'.format(sdr.fc / 1e6))
+    logging.debug('gain: {} dB'.format(sdr.gain))
+    return sdr
+
+
+def run_total_power_int(num_samp, gain, rate, fc, t_int, sdr=None):
     '''
     Implement a total-power radiometer. Raw, uncalibrated power values.
 
@@ -29,26 +43,20 @@ def run_total_power_int(num_samp, gain, rate, fc, t_int):
         Bandpass center frequency (Hz)
     t_int
         Total integration time (s)
+    sdr : RtlSdr (optional)
+        If provided, do not initialize a new instance.
 
     Returns
     -------
     p_tot
         Time-averaged power in the signal from the sdr, in uncalibrated units
     '''
-
-    import rtlsdr.helpers as helpers
-
-    # Start the RtlSdr instance
-    logging.debug('Initializing rtl-sdr with pyrtlsdr')
-    sdr = RtlSdr()
-
     try:
-        sdr.rs = rate
-        sdr.fc = fc
-        sdr.gain = gain
-        logging.debug('  sample rate: {} MHz'.format(sdr.rs / 1e6))
-        logging.debug('  center frequency {} MHz'.format(sdr.fc / 1e6))
-        logging.debug('  gain: {} dB'.format(sdr.gain))
+        if sdr is None:
+            sdr = get_sdr(rate, fc, gain)
+            close_sdr = True
+        else:
+            close_sdr = False
         logging.debug('  num samples per call: {}'.format(num_samp))
         logging.debug('  requested integration time: {}s'.format(t_int))
         # For Nyquist sampling of the passband dv over an integration time
@@ -96,19 +104,21 @@ def run_total_power_int(num_samp, gain, rate, fc, t_int):
         # we actually did
         p_avg = p_tot / (num_samp * cnt)
 
-        # nice and tidy
-        sdr.close()
+        if close_sdr:
+            # nice and tidy
+            sdr.close()
 
     except:
         print('Unexpected error:', sys.exc_info()[0])
         raise
     finally:
-        sdr.close()
-    
+        if sdr is not None and close_sdr:
+            sdr.close()
+
     return p_avg
 
 
-def dicke(num_samp, gain, rate, fc, t, plot=False):
+def dicke(num_samp, gain, rate, fc, t, sdr=None, plot=False):
     '''
     Implement Dicke noise switching using RTL-SDRblog v3 GPIO
 
@@ -124,6 +134,8 @@ def dicke(num_samp, gain, rate, fc, t, plot=False):
         Bandpass center frequency (Hz)
     t_int
         Total time (s)
+    sdr : RtlSdr (optional)
+        If provided, do not initialize a new instance.
 
     Returns
     -------
@@ -144,11 +156,12 @@ def dicke(num_samp, gain, rate, fc, t, plot=False):
         fig.canvas.flush_events()
         fig.canvas.draw()
 
-    # Start the RtlSdr instance
-    logging.debug('Initializing rtl-sdr with pyrtlsdr')
-    sdr = RtlSdr()
-
     try:
+        if sdr is None:
+            sdr = get_sdr(rate, fc, gain)
+            close_sdr = True
+        else:
+            close_sdr = False
         sdr.rs = rate
         sdr.fc = fc
         sdr.gain = gain
@@ -209,22 +222,24 @@ def dicke(num_samp, gain, rate, fc, t, plot=False):
                 fig.canvas.flush_events()
                 fig.canvas.draw()
 
-        np.save(f'./dicke_timeseries_{time_str}.npy', np.array([ts, ps, noise_on]))
+        np.save(f'../output/dicke_timeseries_{time_str}.npy', np.array([ts, ps, noise_on]))
 
-        # nice and tidy
-        sdr.set_gpio_bit(4, 0)
-        sdr.close()
+        if close_sdr:
+            # nice and tidy
+            sdr.set_gpio_bit(4, 0)
+            sdr.close()
 
     except:
         print('Unexpected error:', sys.exc_info()[0])
         raise
     finally:
-        sdr.close()
+        if sdr is not None and close_sdr:
+            sdr.close()
 
     return ts, ps, noise_on
 
 
-def run_spectrum_int( num_samp, nbins, gain, rate, fc, t_int ):
+def run_spectrum_int(num_samp, nbins, gain, rate, fc, t_int, sdr=None):
     '''
     Parameters
     ----------
@@ -241,6 +256,8 @@ def run_spectrum_int( num_samp, nbins, gain, rate, fc, t_int ):
         Base center frequency (Hz)
     t_int
         Total effective integration time (s)
+    sdr : RtlSdr (optional)
+        If provided, do not initialize a new instance.
 
     Returns
     -------
@@ -260,10 +277,12 @@ def run_spectrum_int( num_samp, nbins, gain, rate, fc, t_int ):
     else:
         nperseg = 256
 
-    logging.debug('Initializing rtl-sdr with pyrtlsdr')
-    sdr = RtlSdr()
-
     try:
+        if sdr is None:
+            sdr = get_sdr(rate, fc, gain)
+            close_sdr = True
+        else:
+            close_sdr = False
         sdr.rs = rate # Rate of Sampling (intrinsically tied to bandwidth with SDR dongles)
         sdr.fc = fc
         sdr.gain = gain
@@ -337,19 +356,21 @@ def run_spectrum_int( num_samp, nbins, gain, rate, fc, t_int ):
         # Shift frequency spectra back to the intended range
         freqs = freqs + fc
 
-        # nice and tidy
-        sdr.close()
+        if close_sdr:
+            # nice and tidy
+            sdr.close()
 
     except:
         print('Unexpected error:', sys.exc_info()[0])
         raise
     finally:
-        sdr.close()
+        if sdr is not None and close_sdr:
+            sdr.close()
 
     return freqs, p_avg_db_hz
 
 
-def run_fswitch_int( num_samp, nbins, gain, rate, fc, fthrow, t_int, fswitch=10):
+def run_fswitch_int(num_samp, nbins, gain, rate, fc, fthrow, t_int, fswitch=10, sdr=None):
     '''
     Note: Because a significant time penalty is introduced for each retuning,
           a maximum frequency switching rate of 10 Hz is adopted to help 
@@ -379,6 +400,8 @@ def run_fswitch_int( num_samp, nbins, gain, rate, fc, fthrow, t_int, fswitch=10)
         Total effective integration time (s)
     fswitch (optiona)
          Frequency of switching between fc and fthrow (Hz)
+    sdr : RtlSdr (optional)
+        If provided, do not initialize a new instance.
 
     Returns
     -------
@@ -398,10 +421,12 @@ def run_fswitch_int( num_samp, nbins, gain, rate, fc, fthrow, t_int, fswitch=10)
     if fswitch > 10:
         logging.warning('''Warning: high frequency switching values mean more SDR retunings. A greater fraction of observation time will be spent retuning the SDR, resulting in longer wait times to reach the requested effective integration time.''')
 
-    logging.debug('Initializing rtl-sdr with pyrtlsdr')
-    sdr = RtlSdr()
-
     try:
+        if sdr is None:
+            sdr = get_sdr(rate, fc, gain)
+            close_sdr = True
+        else:
+            close_sdr = False
         sdr.rs = rate # Rate of Sampling (intrinsically tied to bandwidth with SDR dongles)
         sdr.fc = fc
         sdr.gain = gain
@@ -494,14 +519,16 @@ def run_fswitch_int( num_samp, nbins, gain, rate, fc, fthrow, t_int, fswitch=10)
         # Fold switched power spectra
         freqs_fold, p_fold = f_throw_fold(freqs_on, freqs_off, p_avg_on, p_avg_off)
 
-        # nice and tidy
-        sdr.close()
+        if close_sdr:
+            # nice and tidy
+            sdr.close()
 
     except:
         print('Unexpected error:', sys.exc_info()[0])
         raise
     finally:
-        sdr.close()
+        if sdr is not None and close_sdr:
+            sdr.close()
 
     return freqs_fold, p_fold
 

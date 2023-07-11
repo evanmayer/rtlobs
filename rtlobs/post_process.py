@@ -50,7 +50,7 @@ def f_throw_fold(freqs_on, freqs_off, p_on, p_off):
     '''
     Perform a "folding" technique on two spectra with the target signal present
     in order to nearly completely subtract off baseline variation and increase
-    singal-to-noise.
+    signal-to-noise.
     As a matter of convention, I have assumed that the spectrum centered on the
     frequency of interest is freqs_on, p_on. This doesn't matter, up to a
     minus sign in the folded spectrum y-vals.
