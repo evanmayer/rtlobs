@@ -29,7 +29,17 @@ def get_sdr(rate=2.32e6, fc=1.4204e9, gain=35.0):
 
 def run_total_power_int(num_samp, gain, rate, fc, t_int, sdr=None):
     '''
-    Implement a total-power radiometer. Raw, uncalibrated power values.
+    Implement a total-power radiometer.
+    
+    Caveats:
+    * Raw, uncalibrated power values.
+    * The value of the terminating resistance is not divided out, since any
+        calibration makes this irrelevant anyway.
+    * The integration time is length of the overall timeseries sampled by the
+        SDR, not the amount of time spent collecting data - this avoids mixing
+        in any processing overhead with the integration time accounting, but
+        means that it will take >= `t_int` wallclock time to complete the
+        function, in a manner that depends on `num_samp`.
 
     Parameters
     ----------
@@ -44,7 +54,8 @@ def run_total_power_int(num_samp, gain, rate, fc, t_int, sdr=None):
     t_int
         Total integration time (s)
     sdr : RtlSdr (optional)
-        If provided, do not initialize a new instance.
+        If provided, do not initialize a new instance, and do not close it when
+        complete.
 
     Returns
     -------
@@ -67,7 +78,8 @@ def run_total_power_int(num_samp, gain, rate, fc, t_int, sdr=None):
         # complex samples.
         # The phase content of IQ samples allows the bandlimited signal to be
         # Nyquist sampled at a data rate of rs = dv complex samples per second
-        # rather than the 2* dv required of real samples.
+        # rather than the 2* dv required of real samples (but at twice the data
+        # storage)
         N = int(sdr.rs * t_int)
         logging.debug('  => num samples to collect: {}'.format(N))
         logging.debug('  => est. num of calls: {}'.format(int(N / num_samp)))
@@ -120,7 +132,11 @@ def run_total_power_int(num_samp, gain, rate, fc, t_int, sdr=None):
 
 def dicke(num_samp, gain, rate, fc, t, sdr=None, plot=False):
     '''
-    Implement Dicke noise switching using RTL-SDRblog v3 GPIO
+    Implement Dicke noise switching using RTL-SDRblog v3 GPIO. Operates
+    similarly to `run_total_power_int`, see it for more information.
+
+    Returns several outputs which can be used to reconstruct a Dicke-switched
+    output signal timeseries.
 
     Parameters
     ----------
@@ -135,12 +151,22 @@ def dicke(num_samp, gain, rate, fc, t, sdr=None, plot=False):
     t_int
         Total time (s)
     sdr : RtlSdr (optional)
-        If provided, do not initialize a new instance.
+        If provided, do not initialize a new instance, and do not close it when
+        complete.
+    plot : bool (optional)
+        If True, brings up a figure window that updates with the timeseries of
+        P_on - P_ref values.
 
     Returns
     -------
-    iq
-        Complex samples from the device
+    ts
+        UNIX time at which each total power measurement was collected
+    ps
+        Total power measurement from the receiver
+    noise_on
+        [0, 1] denoting whether the GPIO was turned on. It is assumed that the
+        GPIO is connected to a switch that swaps the antenna input to a matched
+        load.
     '''
 
     if plot:
@@ -165,12 +191,13 @@ def dicke(num_samp, gain, rate, fc, t, sdr=None, plot=False):
         sdr.rs = rate
         sdr.fc = fc
         sdr.gain = gain
+        N = int(sdr.rs * t)
+
         logging.debug('  sample rate: {} MHz'.format(sdr.rs / 1e6))
         logging.debug('  center frequency {} MHz'.format(sdr.fc / 1e6))
         logging.debug('  gain: {} dB'.format(sdr.gain))
         logging.debug('  num samples per call: {}'.format(num_samp))
         logging.debug('  requested integration time: {}s'.format(t))
-        N = int(sdr.rs * t)
         logging.debug('  => num samples to collect: {}'.format(N))
         logging.debug('  => est. num of calls: {}'.format(int(N / num_samp)))
 
@@ -271,7 +298,7 @@ def run_spectrum_int(num_samp, nbins, gain, rate, fc, t_int, sdr=None):
     WINDOW = 'hann'
     # Force a default nperseg for welch() because we need to get a window
     # of this size later. Use the scipy default 256, but enforce scipy 
-    # conditions on nbins vs. nperseg when nbins gets small. 
+    # conditions on nbins vs. nperseg when nbins gets small.
     if nbins < 256:
         nperseg = nbins
     else:
